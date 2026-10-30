@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>تطبيق الكابتن - SmartRide</title>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root { --primary: #2563eb; --success: #16a34a; --danger: #dc2626; --warning: #d97706; --dark: #0f172a; --border: #334155; }
+    * { box-sizing: border-box; font-family: 'Cairo', sans-serif; margin: 0; padding: 0; }
+    body { background: var(--dark); color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+    .driver-header { background: #0f172a; padding: 10px 14px; border-bottom: 1px solid #334155; z-index: 20; }
+    .top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 8px; }
+    
+    .rating-frame { padding: 3px 10px; border-radius: 10px; font-weight: 900; font-size: 0.84rem; display: inline-flex; align-items: center; gap: 5px; }
+    .tier-gold { background: linear-gradient(135deg, #fef08a, #eab308); color: #422006; border: 2px solid #fff; box-shadow: 0 0 14px rgba(234, 179, 8, 0.75); }
+    .tier-green { background: linear-gradient(135deg, #dcfce7, #22c55e); color: #052e16; border: 2px solid #15803d; }
+    .tier-yellow { background: linear-gradient(135deg, #fef9c3, #facc15); color: #713f12; border: 2px solid #a16207; }
+    .tier-red { background: linear-gradient(135deg, #fee2e2, #ef4444); color: #fff; border: 2px solid #991b1b; }
+
+    .car-info-bar { background: #1e293b; padding: 6px 10px; border-radius: 8px; font-size: 0.78rem; display: flex; justify-content: space-between; align-items: center; border: 1px solid #334155; }
+    .plate-badge { background: #facc15; color: #000; font-weight: 900; padding: 2px 8px; border-radius: 4px; }
+
+    .switch-wrap { display: flex; align-items: center; gap: 8px; }
+    .switch { position: relative; display: inline-block; width: 52px; height: 26px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; inset: 0; background-color: #ef4444; transition: .3s; border-radius: 34px; }
+    .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+    input:checked + .slider { background-color: #22c55e; }
+    input:checked + .slider:before { transform: translateX(24px); }
+
+    /* شاشة تسجيل دخول الكابتن */
+    .auth-overlay { position: fixed; inset: 0; background: #020617; z-index: 8000; display: flex; align-items: center; justify-content: center; padding: 15px; }
+    .auth-box { background: #1e293b; border: 1px solid #334155; color: #fff; width: 100%; max-width: 400px; border-radius: 16px; padding: 22px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
+    input, textarea { width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: #fff; font-size: 0.9rem; margin-bottom: 10px; }
+
+    /* شاشة الحظر التفصيلية للكابتن */
+    .block-banner-box { background: #450a0a; border: 2px solid #ef4444; color: #fecaca; padding: 10px 14px; font-size: 0.82rem; font-weight: 800; display: none; z-index: 25; }
+    /* شريط التنبيه بقرب انتهاء الوثائق (قبل شهر) */
+    .expiry-warning-bar { background: #78350f; border-bottom: 2px solid #f59e0b; color: #fef08a; padding: 6px 14px; font-size: 0.78rem; font-weight: 800; display: none; z-index: 24; }
+
+    .incoming-panel {
+      max-height: 32vh; background: linear-gradient(135deg, #1e1b4b, #31102f);
+      border-bottom: 4px solid #f59e0b; padding: 8px 14px; display: none;
+      flex-direction: column; justify-content: space-between; align-items: center;
+      text-align: center; z-index: 30; animation: pulseBg 0.7s infinite alternate;
+    }
+    @keyframes pulseBg { from { background: #1e1b4b; } to { background: #450a0a; } }
+    .incoming-top-flex { display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 8px; }
+    .distance-highlight-box { background: #facc15; color: #000; padding: 3px 10px; border-radius: 8px; font-size: 0.95rem; font-weight: 900; border: 2px solid #fff; white-space: nowrap; }
+    .timer-circle { width: 42px; height: 42px; border-radius: 50%; background: var(--danger); color: #fff; font-size: 1.3rem; font-weight: 900; display: flex; align-items: center; justify-content: center; border: 3px solid #fecaca; flex-shrink: 0; }
+
+    .btn { width: 100%; padding: 8px 10px; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 0.84rem; display: inline-flex; align-items: center; justify-content: center; gap: 4px; text-decoration: none; }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-warning { background: var(--warning); color: #fff; }
+    .btn-gmaps { background: #10b981; color: #fff; border: 1px solid #a7f3d0; }
+    .btn-wa { background: #25D366; color: #fff; }
+
+    .map-area { flex: 1; position: relative; width: 100%; }
+    #driver-map { width: 100%; height: 100%; }
+    .gps-status-pill { position: absolute; top: 10px; right: 10px; background: rgba(15,23,42,0.9); color: #38bdf8; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; z-index: 15; border: 1px solid #334155; pointer-events: none; }
+
+    .map-pin-wrap { display: flex; flex-direction: column; align-items: center; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.5)); }
+    .map-pin-wrap .pin-tag { font-size: 0.72rem; font-weight: 900; padding: 2px 7px; border-radius: 5px; color: #fff; margin-bottom: 3px; white-space: nowrap; }
+    .client-red-person { width: 42px; height: 42px; border-radius: 50%; background: #dc2626; border: 3px solid #fff; display: flex; align-items: center; justify-content: center; font-size: 22px; color: #fff; box-shadow: 0 0 15px rgba(220, 38, 38, 0.95); }
+
+    .demand-radar-zone { position: relative; width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+    .demand-radar-zone .pulse-ring { position: absolute; width: 100%; height: 100%; border-radius: 50%; background: rgba(239, 68, 68, 0.35); border: 2px solid #ef4444; animation: radarExpand 1.8s infinite ease-out; }
+    .demand-radar-zone .pulse-core { position: relative; z-index: 2; background: #dc2626; color: #fff; font-size: 0.65rem; font-weight: 900; padding: 2px 6px; border-radius: 10px; border: 1px solid #fde047; white-space: nowrap; }
+    @keyframes radarExpand { 0% { transform: scale(0.3); opacity: 1; } 100% { transform: scale(1.9); opacity: 0; } }
+
+    .rate-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9000; display: none; align-items: center; justify-content: center; padding: 15px; }
+    .rate-box { background: #1e293b; border: 2px solid #38bdf8; border-radius: 14px; padding: 18px; width: 100%; max-width: 380px; text-align: center; }
+    .stars-row { display: flex; justify-content: center; gap: 8px; margin: 12px 0; direction: ltr; }
+    .star-pick { font-size: 2.2rem; background: none; border: none; color: #475569; cursor: pointer; }
+    .star-pick.active { color: #eab308; }
+
+    /* نافذة المراسلات للكابتن */
+    .fullscreen-modal { position: fixed; inset: 0; width: 100vw; height: 100vh; background: #0f172a; z-index: 9500; display: none; flex-direction: column; }
+    .fullscreen-modal.open { display: flex; }
+    .msg-bubble { padding: 8px 12px; border-radius: 10px; margin-bottom: 8px; font-size: 0.84rem; max-width: 85%; }
+    .msg-me { background: #1d4ed8; color: #fff; margin-left: auto; }
+    .msg-admin { background: #334155; color: #f8fafc; margin-right: auto; }
+  </style>
+</head>
+<body>
+
+  <!-- ================= شاشة تسجيل دخول الكابتن (برقم الهاتف والباسورد من الإدارة) ================= -->
+  <div class="auth-overlay" id="driver-auth-screen">
+    <div class="auth-box">
+      <h2 style="text-align:center; color:#38bdf8; margin-bottom:8px;">🛞 بوابة الكابتن - SmartRide</h2>
+      <p style="font-size:0.78rem; color:#94a3b8; text-align:center; margin-bottom:15px;">
+        سجّل الدخول برقم هاتفك وكلمة المرور (4 أرقام وحرفين) المستلمة من الإدارة
+      </p>
+      <label style="font-size:0.8rem; color:#cbd5e1;">رقم الهاتف (المرجعي):</label>
+      <input type="tel" id="drv-login-phone" placeholder="01xxxxxxxxx">
+      <label style="font-size:0.8rem; color:#cbd5e1;">كلمة المرور:</label>
+      <input type="password" id="drv-login-pass" placeholder="أدخل كلمة المرور">
+      <button class="btn btn-primary" style="padding:12px; font-size:0.95rem;" onclick="handleDriverLogin()">🔓 دخول وتفعيل منع انطفاء الشاشة</button>
+    </div>
+  </div>
+
+  <!-- ================= الهيدر العلوي للكابتن ================= -->
+  <div class="driver-header">
+    <div class="top-row">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <img id="hdr-drv-photo" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid #38bdf8;">
+        <div>
+          <div id="hdr-drv-badge" class="rating-frame tier-green">
+            <span id="ui-drv-name">كابتن</span>
+            <span>⭐ <b id="ui-drv-rating">4.0</b></span>
+          </div>
+          <div style="font-size:0.68rem; color:#cbd5e1; margin-top:2px;">
+            💰 <b id="ui-drv-bal" style="color:#38bdf8;">0</b> ج |
+            🚫 رفض: <b id="ui-drv-rej" style="color:#f87171;">0</b> |
+            ⏳ فائتة: <b id="ui-drv-miss" style="color:#facc15;">0</b>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:6px;">
+        <button onclick="openDriverMessages()" style="background:#0284c7; color:#fff; border:none; padding:5px 8px; border-radius:6px; font-size:0.72rem; font-weight:800; cursor:pointer;">✉️ المراسلات</button>
+        <div class="switch-wrap">
+          <span id="ui-online-txt" style="font-size:0.75rem; font-weight:800; color:#f87171;">أوفلاين</span>
+          <label class="switch">
+            <input type="checkbox" id="chk-online" onchange="toggleOnlineState(this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <button onclick="logoutDriver()" style="background:var(--danger); color:#fff; border:none; padding:5px 7px; border-radius:6px; font-size:0.7rem; cursor:pointer;">خروج</button>
+      </div>
+    </div>
+
+    <div class="car-info-bar">
+      <div>
+        <span id="ui-drv-cat">🚗 ملاكي</span> |
+        <b id="ui-drv-model">---</b> (<span id="ui-drv-color">---</span>)
+      </div>
+      <div class="plate-badge" id="ui-drv-plate">---</div>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
+      <span id="wake-lock-indicator" style="font-size:0.68rem; color:#4ade80;">🔆 الشاشة نشطة لا تنطفئ تلقائياً</span>
+      <span id="last-gps-sync-lbl" style="font-size:0.68rem; color:#94a3b8;">📡 GPS تلقائي</span>
+    </div>
+  </div>
+
+  <!-- شريط إشعار الحظر مع تفصيل سبب الحظر بدقة (وثائق منتهية / تقييم / مديونية / رفض) -->
+  <div class="block-banner-box" id="drv-block-banner"></div>
+
+  <!-- شريط التنبيه بقرب انتهاء صلاحية إحدى الوثائق قبل شهر -->
+  <div class="expiry-warning-bar" id="drv-expiry-warning"></div>
+
+  <!-- 1. لوحة الطلب الوارد -->
+  <div class="incoming-panel" id="incoming-box">
+    <div class="incoming-top-flex">
+      <div class="distance-highlight-box">
+        📍 يبعد عنك: <span id="inc-dist">0.00 كم</span>
+      </div>
+      <div id="inc-client-badge" class="rating-frame tier-green" style="font-size:0.8rem; padding:3px 8px;">
+        👤 <span id="inc-client-name">عميل</span> ⭐ <b id="inc-client-rate">4.0</b>
+      </div>
+      <div class="timer-circle" id="inc-timer">6</div>
+    </div>
+
+    <div id="inc-details" style="font-size:0.8rem; font-weight:700; color:#fde047; margin:2px 0;"></div>
+
+    <div style="display:flex; gap:10px; width:100%; margin-top:2px;">
+      <button class="btn btn-success" onclick="acceptOffer()">✅ اقبل</button>
+      <button class="btn btn-danger" onclick="rejectOfferExplicitly()">❌ ارفض</button>
+    </div>
+  </div>
+
+  <!-- 2. شريط إدارة الرحلة الجارية + بيانات العميل ورقم هاتفه مع اتصال وواتساب -->
+  <div id="active-trip-bar" style="display:none; background:#1e293b; padding:10px 14px; border-bottom:2px solid #38bdf8; z-index:25;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+      <span id="trip-state-lbl" style="font-size:0.84rem; font-weight:800; color:#fde047;">متجه للعميل</span>
+      <span style="font-size:1.05rem; font-weight:900; color:#4ade80;"><span id="live-fare-val">0</span> ج.م (<span id="live-km-val">0.00</span> كم)</span>
+    </div>
+
+    <!-- بطاقة بيانات العميل للكابتن (الاسم، الهاتف، اتصال، واتساب) -->
+    <div style="background:#0f172a; padding:8px 10px; border-radius:8px; border:1px solid #334155; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+      <div style="font-size:0.8rem;">
+        👤 <b>العميل:</b> <span id="active-cli-name"></span> | 📱 <b id="active-cli-phone" dir="ltr"></b>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <a id="btn-call-client" href="#" class="btn btn-primary" style="width:auto; padding:4px 10px; font-size:0.75rem;">📞 اتصال</a>
+        <a id="btn-wa-client" href="#" target="_blank" class="btn btn-wa" style="width:auto; padding:4px 10px; font-size:0.75rem;">💬 واتساب</a>
+      </div>
+    </div>
+
+    <div id="wait-customer-box" style="display:none; background:#450a0a; border:1px solid #f87171; padding:6px; border-radius:6px; text-align:center; margin-bottom:6px; font-size:0.8rem;">
+      ⏳ انتظار العميل: <b id="wait-5min-txt" style="font-size:1rem; color:#fde047;">05:00</b>
+      <button class="btn btn-success" id="btn-no-show-cancel" style="display:none; margin-top:4px; padding:5px; font-size:0.78rem;" onclick="cancelForNoShowFree()">
+        ✔️ انتهت الـ 5 دقائق - إلغاء بدون أي غرامة
+      </button>
+    </div>
+
+    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+      <button class="btn btn-warning" id="btn-arrived" style="flex:1;" onclick="markArrived()">📍 وصلت</button>
+      <button class="btn btn-primary" id="btn-start" style="flex:1; display:none;" onclick="startRide()">▶️ ابدأ الرحلة</button>
+      <button class="btn btn-gmaps" id="btn-google-nav" style="flex:1;" onclick="openGoogleMapsNavigation()">🗺️ فتح خرائط جوجل</button>
+      <button class="btn btn-danger" id="btn-cancel-accepted" style="flex:1;" onclick="cancelAcceptedRideWithReason()">🚫 إلغاء الرحلة</button>
+      <button class="btn btn-danger" id="btn-finish" style="flex:1; display:none;" onclick="finishRide()">🏁 إنهاء الرحلة</button>
+    </div>
+  </div>
+
+  <!-- نافذة تقييم العميل بعد انتهاء المشوار -->
+  <div class="rate-modal" id="rate-client-modal">
+    <div class="rate-box">
+      <h3 style="color:#4ade80; margin-bottom:6px;">🏁 اكتملت الرحلة بنجاح!</h3>
+      <div id="drv-invoice-summary" style="font-size:0.88rem; margin-bottom:10px; line-height:1.6;"></div>
+      <div style="font-size:0.85rem; font-weight:800;">⭐ قيّم العميل في هذه الرحلة:</div>
+      <div class="stars-row" id="drv-rate-stars">
+        <button class="star-pick active" onclick="pickClientStars(1)">★</button>
+        <button class="star-pick active" onclick="pickClientStars(2)">★</button>
+        <button class="star-pick active" onclick="pickClientStars(3)">★</button>
+        <button class="star-pick active" onclick="pickClientStars(4)">★</button>
+        <button class="star-pick active" onclick="pickClientStars(5)">★</button>
+      </div>
+      <button class="btn btn-success" onclick="submitClientRating()">✅ حفظ التقييم واستكمال العمل</button>
+    </div>
+  </div>
+
+  <!-- الخريطة -->
+  <div class="map-area">
+    <div class="gps-status-pill" id="gps-live-badge">🛰️ رادار الطلبات الحي نشط عالخريطة</div>
+    <div id="driver-map"></div>
+  </div>
+
+  <!-- ================= نافذة صندوق المراسلات للكابتن بالرقم المرجعي ================= -->
+  <div class="fullscreen-modal" id="drv-messages-modal">
+    <div style="background:#1e293b; padding:12px 15px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155;">
+      <span style="font-weight:900;">✉️ صندوق مراسلات الكابتن مع الإدارة</span>
+      <button onclick="closeDriverMessages()" style="background:#dc2626; color:#fff; border:none; padding:4px 10px; border-radius:6px; font-weight:700; cursor:pointer;">إغلاق ✖</button>
+    </div>
+    <div style="flex:1; overflow-y:auto; padding:15px; max-width:600px; width:100%; margin:0 auto;">
+      <div id="drv-threads-list-view">
+        <div style="background:#1e293b; padding:12px; border-radius:10px; margin-bottom:12px; border:1px solid #334155;">
+          <h4 style="margin-bottom:8px;">➕ إرسال رسالة جديدة للإدارة</h4>
+          <input type="text" id="drv-msg-subj" placeholder="موضوع الرسالة (مثال: تجديد رخصة أو مراجعة حساب)">
+          <textarea id="drv-msg-body" rows="3" placeholder="اكتب رسالتك هنا..."></textarea>
+          <button class="btn btn-primary" onclick="createDriverThread()">📨 إرسال وإنشاء رقم مرجعي</button>
+        </div>
+        <h4 style="margin-bottom:8px;">📂 سجل المراسلات برقم المرجع:</h4>
+        <div id="drv-threads-container"></div>
+      </div>
+
+      <div id="drv-thread-detail-view" style="display:none; flex-direction:column; height:82vh;">
+        <button class="btn btn-warning" style="margin-bottom:10px;" onclick="backToDriverThreads()">🔙 العودة للقائمة</button>
+        <div style="background:#1e293b; padding:12px; border-radius:10px; flex:1; display:flex; flex-direction:column; overflow:hidden; border:1px solid #334155;">
+          <div style="border-bottom:1px solid #334155; padding-bottom:6px; margin-bottom:8px;">
+            <span id="drv-view-ref" style="background:var(--primary); padding:2px 8px; border-radius:5px; font-weight:900; font-size:0.8rem;"></span>
+            <b id="drv-view-subj" style="margin-right:8px;"></b>
+          </div>
+          <div id="drv-view-messages" style="flex:1; overflow-y:auto; display:flex; flex-direction:column; padding:6px;"></div>
+          <div style="display:flex; gap:6px; margin-top:8px;">
+            <input type="text" id="drv-reply-inp" placeholder="اكتب ردك..." style="margin:0;">
+            <button class="btn btn-primary" style="width:90px;" onclick="sendDriverReply()">إرسال</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, get, update, push, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB5GqPcEhvzHoe45SYYUNL7E9oqVdmVrag",
+      authDomain: "projectlinkst.firebaseapp.com",
+      databaseURL: "https://projectlinkst-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "projectlinkst",
+      storageBucket: "projectlinkst.firebasestorage.app",
+      messagingSenderId: "704490160583",
+      appId: "1:704490160583:web:c4031a44ee6ec2fffa99e2"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const MAPBOX_TOKEN = "pk.eyJ1IjoibXVoYW1lZGVsaGFtYWxhd3kiLCJhIjoiY212dXZrcDJlMGF2YjM1czVqOGtkbWVldCJ9.yGoETr4LTcLOGbx1_UFc5Q";
+    mapboxgl.accessToken = MAPBOX_TOKEN;
+
+    // 1. تفعيل ملء الشاشة التلقائي + منع انطفاء شاشة الكابتن (Wake Lock API)
+    let wakeLockSentinel = null;
+    async function activateScreenWakeLock() {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLockSentinel = await navigator.wakeLock.request('screen');
+          document.getElementById('wake-lock-indicator').innerText = "🔆 الشاشة مضاءة دائماً (WakeLock نشط)";
+        }
+      } catch (e) {}
+    }
+    function triggerFullScreenAndWakeLock() {
+      const el = document.documentElement;
+      if (!document.fullscreenElement && el.requestFullscreen) {
+        el.requestFullscreen().catch(() => {});
+      }
+      activateScreenWakeLock();
+    }
+    document.addEventListener('click', () => triggerFullScreenAndWakeLock(), { once: true });
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') activateScreenWakeLock();
+    });
+
+    function formatWhatsAppEgypt(phone) {
+      let p = (phone || '').replace(/\D/g, '');
+      if (p.startsWith('0')) p = '20' + p.substring(1);
+      return p;
+    }
+
+    let currentDriverPhone = localStorage.getItem('smartride_driver_phone') || null;
+    let settings = { maxRadiusKm: 3, disableRadiusLimit: false, requestTimeoutSec: 6, freeWaitMinutes: 5, priceTolerancePercent: 15, appCommissionPercent: 15, maxDriverRejects: 3, maxDriverDebt: 200, categories: {} };
+    let driversDB = {}, clientsDB = {}, ridesDB = {}, messagesDB = {};
+    let isOnline = false;
+    let myPos = { lat: 30.4682, lng: 31.1870 };
+
+    let currentOfferId = null, activeRideId = null, lastCompletedRideForRating = null, openedDrvThreadId = null;
+    let chosenStarsForClient = 5;
+    let countdownInterval = null, alarmInterval = null, wait5Interval = null, meterInterval = null, gpsWatchId = null;
+    let lastGPS = null, accKm = 0, accWait = 0;
+
+    // ================= تسجيل دخول الكابتن وفحص الوثائق والحظر =================
+    window.handleDriverLogin = async function() {
+      triggerFullScreenAndWakeLock();
+      const phone = document.getElementById('drv-login-phone').value.trim();
+      const pass = document.getElementById('drv-login-pass').value.trim();
+      if (!phone || !pass) return alert("أدخل رقم الهاتف وكلمة المرور!");
+
+      const snap = await get(ref(db, `smartride/drivers/${phone}`));
+      if (!snap.exists()) return alert("رقم الهاتف غير مسجل ككابتن لدى الإدارة!");
+      const drv = snap.val();
+      if (drv.password !== pass) return alert("كلمة المرور غير صحيحة!");
+
+      currentDriverPhone = phone;
+      localStorage.setItem('smartride_driver_phone', phone);
+      document.getElementById('driver-auth-screen').style.display = 'none';
+      await autoUpdateDriverGPS("تسجيل الدخول");
+      evaluateDriverDocumentsAndBlockStatus();
+      refreshHeaderUI();
+    };
+
+    window.logoutDriver = async function() {
+      if (currentDriverPhone && isOnline) {
+        await update(ref(db, `smartride/drivers/${currentDriverPhone}`), { online: false });
+      }
+      localStorage.removeItem('smartride_driver_phone');
+      currentDriverPhone = null;
+      document.getElementById('driver-auth-screen').style.display = 'flex';
+    };
+
+    // فحص تواريخ صلاحية الوثائق الثلاث (البطاقة، رخصة القيادة، رخصة السيارة) وتحديد أسباب الحظر والتنبيه قبل شهر
+    async function evaluateDriverDocumentsAndBlockStatus() {
+      if (!currentDriverPhone || !driversDB[currentDriverPhone]) return;
+      const d = driversDB[currentDriverPhone];
+      const now = new Date();
+      now.setHours(0,0,0,0);
+
+      const docs = [
+        { key: 'nationalIdExpiry', name: 'بطاقة الرقم القومي', dateStr: d.nationalIdExpiry },
+        { key: 'driverLicenseExpiry', name: 'رخصة القيادة الخاصة', dateStr: d.driverLicenseExpiry },
+        { key: 'carLicenseExpiry', name: 'رخصة تسيير السيارة', dateStr: d.carLicenseExpiry }
+      ];
+
+      const expiredList = [];
+      const expiringSoonList = [];
+
+      docs.forEach(doc => {
+        if (!doc.dateStr) return;
+        const expDate = new Date(doc.dateStr);
+        expDate.setHours(0,0,0,0);
+        const diffDays = Math.ceil((expDate - now) / (1000 * 60 * 60 * 24));
+        if (diffDays < 0) {
+          expiredList.push(`${doc.name} (انتهت في ${doc.dateStr})`);
+        } else if (diffDays <= 30) {
+          expiringSoonList.push(`${doc.name} (تنتهي خلال ${diffDays} يوم في ${doc.dateStr})`);
+        }
+      });
+
+      // عرض تنبيه الوثائق التي ستنتهي خلال أقل من شهر
+      const warnBar = document.getElementById('drv-expiry-warning');
+      if (expiringSoonList.length > 0) {
+        warnBar.style.display = 'block';
+        warnBar.innerHTML = `⚠️ تنبيه هام بقرب انتهاء وثائق: ${expiringSoonList.join(' ، ')} — يرجى التجديد لتجنب الحظر التلقائي.`;
+      } else {
+        warnBar.style.display = 'none';
+      }
+
+      // تجميع كافة أسباب الحظر إن وجدت
+      const blockReasons = [];
+      if (expiredList.length > 0) {
+        blockReasons.push(`انتهاء صلاحية الوثائق التالية: [${expiredList.join(' + ')}]`);
+      }
+      const avgRating = (d.ratingCount && d.ratingCount > 0) ? (d.ratingSum / d.ratingCount) : 4.0;
+      if (avgRating < 3.0 && (d.lowRatingCount || 0) >= 5) {
+        blockReasons.push(`انخفاض متوسط التقييم عن 3 نجوم (${avgRating.toFixed(1)}) وتكرار التقييم المنخفض 5 مرات`);
+      }
+      if ((d.rejectsCount || 0) >= (Number(settings.maxDriverRejects) || 3)) {
+        blockReasons.push(`تجاوز الحد الأقصى لرفض الطلبات المتتالي (${d.rejectsCount} مرات)`);
+      }
+      if ((d.balance || 0) <= -Math.abs(Number(settings.maxDriverDebt) || 200)) {
+        blockReasons.push(`تخطي سقف المديونية المسموح به (${d.balance} ج.م)`);
+      }
+      if (d.manualBlockReason) {
+        blockReasons.push(`حظر إداري: ${d.manualBlockReason}`);
+      }
+
+      const shouldBeBlocked = d.isBlocked || expiredList.length > 0 || blockReasons.length > 0;
+
+      if (expiredList.length > 0 && !d.isBlocked) {
+        await update(ref(db, `smartride/drivers/${currentDriverPhone}`), {
+          isBlocked: true,
+          online: false
+        });
+      }
+
+      const blockBanner = document.getElementById('drv-block-banner');
+      if (shouldBeBlocked) {
+        blockBanner.style.display = 'block';
+        const reasonText = blockReasons.length > 0 ? blockReasons.join(' ، و') : 'قرار إداري من لوحة التحكم';
+        blockBanner.innerHTML = `⛔ حسابك محظور حالياً ولا يمكنك استقبال رحلات!<br>📌 <b>سبب الحظر:</b> ${reasonText}.<br><small>تواصل مع الإدارة عبر زر (✉️ المراسلات) بعد تسوية السبب أو تجديد الوثائق.</small>`;
+        if (isOnline) {
+          isOnline = false;
+          document.getElementById('chk-online').checked = false;
+          update(ref(db, `smartride/drivers/${currentDriverPhone}`), { online: false });
+        }
+      } else {
+        blockBanner.style.display = 'none';
+      }
+    }
+
+    function getRatingInfo(entity) {
+      if (!entity || !entity.ratingCount || entity.ratingCount === 0) {
+        return { avg: 4.0, tierClass: 'tier-green', label: '4.0 (جديد)' };
+      }
+      const avg = +(entity.ratingSum / entity.ratingCount).toFixed(2);
+      let tierClass = 'tier-green';
+      if (avg >= 4.7) tierClass = 'tier-gold';
+      else if (avg >= 4.0) tierClass = 'tier-green';
+      else if (avg >= 3.0) tierClass = 'tier-yellow';
+      else tierClass = 'tier-red';
+      return { avg, tierClass, label: avg.toFixed(1) };
+    }
+
+    const map = new mapboxgl.Map({
+      container: 'driver-map',
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [myPos.lng, myPos.lat],
+      zoom: 14
+    });
+    let mapMarkers = [];
+
+    function autoUpdateDriverGPS(reason = "تحديث دوري") {
+      return new Promise((resolve) => {
+        if (!navigator.geolocation) { syncDriverCoordsToDB(); return resolve(myPos); }
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const newLat = pos.coords.latitude, newLng = pos.coords.longitude, accuracy = pos.coords.accuracy;
+            if (activeRideId && ridesDB[activeRideId]?.status === 'in_progress') {
+              processRideGPSMovement(newLat, newLng, accuracy);
+            }
+            myPos = { lat: newLat, lng: newLng };
+            document.getElementById('last-gps-sync-lbl').innerText = `📡 آخر تحديث (${reason}): ${new Date().toLocaleTimeString('ar-EG')}`;
+            syncDriverCoordsToDB();
+            if (!currentOfferId) map.easeTo({ center: [myPos.lng, myPos.lat], duration: 600 });
+            resolve(myPos);
+          },
+          () => { syncDriverCoordsToDB(); resolve(myPos); },
+          { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
+        );
+      });
+    }
+
+    function syncDriverCoordsToDB() {
+      if (!currentDriverPhone || !driversDB[currentDriverPhone]) return;
+      update(ref(db, `smartride/drivers/${currentDriverPhone}`), {
+        lat: myPos.lat,
+        lng: myPos.lng,
+        online: isOnline,
+        lastSyncAt: Date.now()
+      });
+    }
+
+    setInterval(() => autoUpdateDriverGPS("كل دقيقة"), 60000);
+    window.addEventListener('DOMContentLoaded', () => autoUpdateDriverGPS("فتح التطبيق"));
+    window.addEventListener('focus', () => autoUpdateDriverGPS("تنشيط الشاشة"));
+
+    function startContinuousGPSWatchForTrip() {
+      if (!navigator.geolocation) return;
+      if (gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
+      gpsWatchId = navigator.geolocation.watchPosition((pos) => {
+        processRideGPSMovement(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+      }, null, { enableHighAccuracy: true, maximumAge: 0 });
+    }
+
+    function processRideGPSMovement(newLat, newLng, accuracy) {
+      if (!activeRideId || ridesDB[activeRideId]?.status !== 'in_progress') return;
+      if (accuracy && accuracy > 30) return;
+      if (!lastGPS) { lastGPS = { lat: newLat, lng: newLng, time: Date.now() }; return; }
+      const stepKm = haversineKm(lastGPS.lat, lastGPS.lng, newLat, newLng);
+      const dtHours = (Date.now() - lastGPS.time) / 3600000;
+      const speedKmh = dtHours > 0 ? (stepKm / dtHours) : 0;
+
+      if (stepKm * 1000 >= 10 && speedKmh <= 140) {
+        accKm += stepKm;
+        lastGPS = { lat: newLat, lng: newLng, time: Date.now() };
+        myPos = { lat: newLat, lng: newLng };
+        syncDriverCoordsToDB();
+        syncLiveMeter();
+      }
+    }
+
+    window.openGoogleMapsNavigation = function() {
+      const r = ridesDB[activeRideId];
+      if (!r) return;
+      let dest = r.pickup;
+      if (r.status === 'in_progress') {
+        if (r.dropoff) dest = r.dropoff;
+        else return alert("العميل لم يحدد وجهة مسبقة على الخريطة.");
+      }
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${dest.lat},${dest.lng}&travelmode=driving&dir_action=navigate`, '_blank');
+    };
+
+    let audioCtx = null;
+    function beepSiren() {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(620, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1180, audioCtx.currentTime + 0.35);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.45);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.45);
+      } catch (e) {}
+    }
+
+    function haversineKm(lat1, lon1, lat2, lon2) {
+      const R = 6371, dLat = (lat2 - lat1)*Math.PI/180, dLon = (lon2 - lon1)*Math.PI/180;
+      const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+      return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+    }
+
+    function formatDistanceText(distKm) {
+      if (distKm < 1) return `${Math.round(distKm * 1000)} متر`;
+      return `${distKm.toFixed(2)} كم`;
+    }
+
+    function calcFare(catKey, distKm, waitMin) {
+      const c = settings.categories?.[catKey] || { base: 15, perKm: 7, perMin: 1, minFare: 30 };
+      return Math.max(Number(c.minFare), Math.round(Number(c.base) + distKm*Number(c.perKm) + waitMin*Number(c.perMin)));
+    }
+
+    onValue(ref(db, 'smartride/settings'), snap => { if (snap.exists()) settings = snap.val(); });
+    onValue(ref(db, 'smartride/clients'), snap => { clientsDB = snap.val() || {}; });
+    onValue(ref(db, 'smartride/drivers'), snap => {
+      driversDB = snap.val() || {};
+      if (currentDriverPhone && driversDB[currentDriverPhone]) {
+        document.getElementById('driver-auth-screen').style.display = 'none';
+        evaluateDriverDocumentsAndBlockStatus();
+        refreshHeaderUI();
+      }
+      renderDriverMapMarkers();
+    });
+    onValue(ref(db, 'smartride/rides'), snap => { ridesDB = snap.val() || {}; checkIncomingAndActiveRides(); renderDriverMapMarkers(); });
+    onValue(ref(db, 'smartride/messages'), snap => { messagesDB = snap.val() || {}; renderDrvThreads(); if (openedDrvThreadId) renderSingleDrvThread(openedDrvThreadId); });
+
+    function renderDriverMapMarkers() {
+      mapMarkers.forEach(m => m.remove());
+      mapMarkers = [];
+      if (!currentDriverPhone) return;
+
+      let activeDemandCount = 0;
+      Object.values(ridesDB).forEach(r => {
+        if (['offering', 'no_drivers', 'accepted'].includes(r.status) && r.pickup && r.pickup.lat && r.pickup.lng) {
+          activeDemandCount++;
+          if (r.id !== currentOfferId && r.id !== activeRideId) {
+            const pulseEl = document.createElement('div');
+            pulseEl.className = 'demand-radar-zone';
+            pulseEl.innerHTML = `<div class="pulse-ring"></div><div class="pulse-core">🔥 طلب نشط</div>`;
+            mapMarkers.push(new mapboxgl.Marker(pulseEl).setLngLat([r.pickup.lng, r.pickup.lat]).addTo(map));
+          }
+        }
+      });
+      document.getElementById('gps-live-badge').innerText = `🛰️ مناطق الطلبات النشطة عالرادار الآن: (${activeDemandCount})`;
+
+      Object.values(driversDB).forEach(d => {
+        if (d.id !== currentDriverPhone && d.online && !d.isBlocked && d.lat && d.lng) {
+          addCarPin(d.lng, d.lat, '#475569', d.name, '🚓');
+        }
+      });
+
+      addCarPin(myPos.lng, myPos.lat, '#2563eb', 'سيارتك 🚙', '🚙');
+
+      const targetRide = ridesDB[currentOfferId] || ridesDB[activeRideId];
+      if (targetRide) {
+        if (targetRide.status !== 'in_progress' && targetRide.pickup) {
+          const distKm = haversineKm(myPos.lat, myPos.lng, targetRide.pickup.lat, targetRide.pickup.lng);
+          addRedPersonClientPin(targetRide.pickup.lng, targetRide.pickup.lat, `${targetRide.clientName} (${formatDistanceText(distKm)})`);
+        }
+        if (targetRide.dropoff) {
+          addCarPin(targetRide.dropoff.lng, targetRide.dropoff.lat, '#0f172a', 'وجهة الوصول 🏁', '🏁');
+        }
+      }
+    }
+
+    function addCarPin(lng, lat, bgColor, text, emoji) {
+      const el = document.createElement('div');
+      el.className = 'map-pin-wrap';
+      el.innerHTML = `<div class="pin-tag" style="background:${bgColor};">${text}</div><div style="font-size:26px; line-height:1;">${emoji}</div>`;
+      mapMarkers.push(new mapboxgl.Marker(el).setLngLat([lng, lat]).addTo(map));
+    }
+
+    function addRedPersonClientPin(lng, lat, text) {
+      const el = document.createElement('div');
+      el.className = 'map-pin-wrap';
+      el.innerHTML = `
+        <div class="pin-tag" style="background:#dc2626; font-size:0.78rem;">${text}</div>
+        <div class="demand-radar-zone" style="width:52px; height:52px;">
+          <div class="pulse-ring"></div>
+          <div class="client-red-person" style="position:relative; z-index:3;">🧍‍♂️</div>
+        </div>
+      `;
+      mapMarkers.push(new mapboxgl.Marker(el).setLngLat([lng, lat]).addTo(map));
+    }
+
+    function checkIncomingAndActiveRides() {
+      if (!currentDriverPhone) return;
+      const incBox = document.getElementById('incoming-box');
+      const actBar = document.getElementById('active-trip-bar');
+
+      const offered = Object.values(ridesDB).find(r => r.status === 'offering' && r.offeredToDriverId === currentDriverPhone);
+      if (offered) {
+        if (currentOfferId !== offered.id) {
+          currentOfferId = offered.id;
+          showIncomingOffer(offered);
+        }
+      } else {
+        currentOfferId = null;
+        clearInterval(countdownInterval);
+        clearInterval(alarmInterval);
+        incBox.style.display = 'none';
+      }
+
+      const active = Object.values(ridesDB).find(r => r.driverId === currentDriverPhone && ['accepted','arrived','in_progress'].includes(r.status));
+      if (active) {
+        activeRideId = active.id;
+        actBar.style.display = 'block';
+        document.getElementById('live-fare-val').innerText = active.liveFare;
+        document.getElementById('live-km-val').innerText = (active.liveDistKm || 0).toFixed(2);
+
+        // عرض بيانات العميل ورقم هاتفه مع أزرار الاتصال والواتساب
+        const cliPhone = active.clientPhone || active.clientId;
+        document.getElementById('active-cli-name').innerText = active.clientName;
+        document.getElementById('active-cli-phone').innerText = cliPhone;
+        document.getElementById('btn-call-client').href = `tel:${cliPhone}`;
+        document.getElementById('btn-wa-client').href = `https://wa.me/${formatWhatsAppEgypt(cliPhone)}?text=${encodeURIComponent('مرحباً، معك كابتن SmartRide بخصوص رحلتك الحالية')}`;
+
+        const gmapsBtn = document.getElementById('btn-google-nav');
+        const cancelAccBtn = document.getElementById('btn-cancel-accepted');
+
+        if (active.status === 'accepted') {
+          const dKm = haversineKm(myPos.lat, myPos.lng, active.pickup.lat, active.pickup.lng);
+          document.getElementById('trip-state-lbl').innerText = `متجه للعميل (${formatDistanceText(dKm)})`;
+          document.getElementById('btn-arrived').style.display = 'inline-flex';
+          document.getElementById('btn-start').style.display = 'none';
+          document.getElementById('btn-finish').style.display = 'none';
+          cancelAccBtn.style.display = 'inline-flex';
+          document.getElementById('wait-customer-box').style.display = 'none';
+          gmapsBtn.style.display = 'inline-flex';
+        } else if (active.status === 'arrived') {
+          document.getElementById('trip-state-lbl').innerText = `وصلت وبانتظار العميل`;
+          document.getElementById('btn-arrived').style.display = 'none';
+          document.getElementById('btn-start').style.display = 'inline-flex';
+          document.getElementById('btn-finish').style.display = 'none';
+          cancelAccBtn.style.display = 'inline-flex';
+          document.getElementById('wait-customer-box').style.display = 'block';
+          gmapsBtn.style.display = 'none';
+          run5MinWait(active.arrivedAt);
+        } else if (active.status === 'in_progress') {
+          document.getElementById('trip-state-lbl').innerText = `🚀 الرحلة جارية (${active.paymentMethod === 'wallet' ? 'محفظة' : 'كاش'})`;
+          document.getElementById('btn-arrived').style.display = 'none';
+          document.getElementById('btn-start').style.display = 'none';
+          document.getElementById('btn-finish').style.display = 'inline-flex';
+          cancelAccBtn.style.display = 'none';
+          document.getElementById('wait-customer-box').style.display = 'none';
+          gmapsBtn.style.display = active.dropoff ? 'inline-flex' : 'none';
+        }
+      } else {
+        activeRideId = null;
+        actBar.style.display = 'none';
+      }
+    }
+
+    async function showIncomingOffer(ride) {
+      clearInterval(countdownInterval);
+      clearInterval(alarmInterval);
+      beepSiren();
+      alarmInterval = setInterval(beepSiren, 900);
+
+      document.getElementById('incoming-box').style.display = 'flex';
+      const distKm = haversineKm(myPos.lat, myPos.lng, ride.pickup.lat, ride.pickup.lng);
+      document.getElementById('inc-dist').innerText = formatDistanceText(distKm);
+
+      const cliObj = clientsDB[ride.clientId] || {};
+      const cRate = getRatingInfo(cliObj);
+      const cBadge = document.getElementById('inc-client-badge');
+      cBadge.className = `rating-frame ${cRate.tierClass}`;
+      document.getElementById('inc-client-name').innerText = ride.clientName;
+      document.getElementById('inc-client-rate').innerText = cRate.label;
+
+      document.getElementById('inc-details').innerText = `${ride.hasPredefinedDest ? `التكلفة المقدرة: ${ride.estimatedFare} ج.م` : 'بدون وجهة مسبقة (حساب بالعداد)'}`;
+
+      renderDriverMapMarkers();
+      const bounds = new mapboxgl.LngLatBounds();
+      bounds.extend([myPos.lng, myPos.lat]);
+      bounds.extend([ride.pickup.lng, ride.pickup.lat]);
+      map.fitBounds(bounds, { padding: 80, maxZoom: 15 });
+
+      let sec = Number(settings.requestTimeoutSec) || 6;
+      document.getElementById('inc-timer').innerText = sec;
+
+      countdownInterval = setInterval(() => {
+        sec--;
+        document.getElementById('inc-timer').innerText = sec;
+        if (sec <= 0) {
+          clearInterval(countdownInterval);
+          handleMissedOfferWithoutAction();
+        }
+      }, 1000);
+    }
+
+    window.acceptOffer = async function() {
+      if (!currentOfferId || !currentDriverPhone) return;
+      clearInterval(countdownInterval);
+      clearInterval(alarmInterval);
+      await autoUpdateDriverGPS("قبول الطلب");
+
+      await update(ref(db, `smartride/drivers/${currentDriverPhone}`), { rejectsCount: 0 });
+      await update(ref(db, `smartride/rides/${currentOfferId}`), {
+        status: 'accepted',
+        driverId: currentDriverPhone,
+        driverName: driversDB[currentDriverPhone]?.name || 'كابتن',
+        acceptedAt: Date.now(),
+        offeredToDriverId: null
+      });
+      document.getElementById('incoming-box').style.display = 'none';
+    };
+
+    window.rejectOfferExplicitly = async function() {
+      if (!currentOfferId || !ridesDB[currentOfferId] || !currentDriverPhone) return;
+      clearInterval(countdownInterval);
+      clearInterval(alarmInterval);
+      await autoUpdateDriverGPS("رفض الطلب");
+
+      const r = ridesDB[currentOfferId];
+      const newRej = (driversDB[currentDriverPhone]?.rejectsCount || 0) + 1;
+      const shouldBlock = newRej >= (Number(settings.maxDriverRejects) || 3);
+
+      await update(ref(db, `smartride/drivers/${currentDriverPhone}`), {
+        rejectsCount: newRej, isBlocked: shouldBlock, online: shouldBlock ? false : isOnline
+      });
+      await passRideToNextCandidate(r);
+      if (shouldBlock) evaluateDriverDocumentsAndBlockStatus();
+    };
+
+    async function handleMissedOfferWithoutAction() {
+      if (!currentOfferId || !ridesDB[currentOfferId] || !currentDriverPhone) return;
+      clearInterval(alarmInterval);
+      const r = ridesDB[currentOfferId];
+      const newMissed = (driversDB[currentDriverPhone]?.missedCount || 0) + 1;
+      await update(ref(db, `smartride/drivers/${currentDriverPhone}`), { missedCount: newMissed });
+      await passRideToNextCandidate(r);
+    }
+
+    async function passRideToNextCandidate(r) {
+      const nextIdx = r.currentCandidateIndex + 1;
+      if (nextIdx < r.candidateQueue.length) {
+        await update(ref(db, `smartride/rides/${r.id}`), {
+          currentCandidateIndex: nextIdx, offeredToDriverId: r.candidateQueue[nextIdx].id
+        });
+      } else {
+        await update(ref(db, `smartride/rides/${r.id}`), { status: 'no_drivers', offeredToDriverId: null });
+      }
+      currentOfferId = null;
+      document.getElementById('incoming-box').style.display = 'none';
+    }
+
+    window.markArrived = async function() {
+      if (!activeRideId) return;
+      await autoUpdateDriverGPS("الوصول للعميل");
+      await update(ref(db, `smartride/rides/${activeRideId}`), { status: 'arrived', arrivedAt: Date.now() });
+    };
+
+    function run5MinWait(arrivedAt) {
+      clearInterval(wait5Interval);
+      const maxSec = (Number(settings.freeWaitMinutes) || 5) * 60;
+      const tick = () => {
+        const rem = Math.max(0, maxSec - Math.floor((Date.now() - (arrivedAt || Date.now())) / 1000));
+        document.getElementById('wait-5min-txt').innerText = `${String(Math.floor(rem/60)).padStart(2,'0')}:${String(rem%60).padStart(2,'0')}`;
+        document.getElementById('btn-no-show-cancel').style.display = rem === 0 ? 'inline-flex' : 'none';
+      };
+      tick();
+      wait5Interval = setInterval(tick, 1000);
+    }
+
+    window.cancelForNoShowFree = async function() {
+      if (!activeRideId) return;
+      clearInterval(wait5Interval);
+      await autoUpdateDriverGPS("إلغاء لعدم حضور العميل");
+      await update(ref(db, `smartride/rides/${activeRideId}`), { status: 'cancelled_no_show' });
+      alert("تم إلغاء الرحلة لعدم حضور العميل بعد مرور 5 دقائق بدون أي غرامة عليك.");
+    };
+
+    window.cancelAcceptedRideWithReason = async function() {
+      if (!activeRideId || !ridesDB[activeRideId] || !currentDriverPhone) return;
+      const r = ridesDB[activeRideId];
+
+      if (r.status === 'arrived' && r.arrivedAt && (Date.now() - r.arrivedAt >= (Number(settings.freeWaitMinutes)||5)*60000)) {
+        return cancelForNoShowFree();
+      }
+
+      const reason = prompt("⚠️ إلغاء الرحلة بعد قبولها يطبق غرامة (10 ج.م) تضاف لمديونيتك!\nاكتب سبب الإلغاء بالتفصيل هنا، وستراجعه الإدارة لرفع الغرامة إذا كان مقنعاً:");
+      if (reason === null) return;
+      if (reason.trim().length < 3) return alert("يرجى كتابة سبب واضح.");
+
+      clearInterval(wait5Interval);
+      const curBal = Number(driversDB[currentDriverPhone]?.balance || 0);
+      const newBal = +(curBal - 10).toFixed(2);
+      const debtBlock = newBal <= -Math.abs(Number(settings.maxDriverDebt) || 200);
+
+      await update(ref(db, `smartride/drivers/${currentDriverPhone}`), {
+        balance: newBal,
+        isBlocked: debtBlock ? true : (driversDB[currentDriverPhone]?.isBlocked || false),
+        online: debtBlock ? false : isOnline
+      });
+
+      const appealRef = push(ref(db, 'smartride/penalty_appeals'));
+      await set(appealRef, {
+        id: appealRef.key,
+        rideId: activeRideId,
+        driverId: currentDriverPhone,
+        driverName: driversDB[currentDriverPhone]?.name || 'كابتن',
+        clientName: r.clientName,
+        penaltyAmount: 10,
+        reason: reason.trim(),
+        status: 'pending',
+        createdAt: Date.now()
+      });
+
+      await update(ref(db, `smartride/rides/${activeRideId}`), {
+        status: 'cancelled_by_driver',
+        driverCancelReason: reason.trim()
+      });
+    };
+
+    window.startRide = async function() {
+      if (!activeRideId) return;
+      clearInterval(wait5Interval);
+      await autoUpdateDriverGPS("بدء الرحلة");
+
+      accKm = 0; accWait = 0;
+      lastGPS = { lat: myPos.lat, lng: myPos.lng, time: Date.now() };
+      const r = ridesDB[activeRideId];
+      await update(ref(db, `smartride/rides/${activeRideId}`), {
+        status: 'in_progress', liveDistKm: 0, liveWaitMin: 0,
+        liveFare: settings.categories?.[r.category]?.base || 15
+      });
+
+      renderDriverMapMarkers();
+      startContinuousGPSWatchForTrip();
+
+      clearInterval(meterInterval);
+      meterInterval = setInterval(() => {
+        if (!activeRideId || ridesDB[activeRideId]?.status !== 'in_progress') return;
+        if (Date.now() - lastGPS.time >= 5000) {
+          accWait += (5 / 60);
+          syncLiveMeter();
+        }
+      }, 5000);
+    };
+
+    function syncLiveMeter() {
+      if (!activeRideId || !ridesDB[activeRideId]) return;
+      const r = ridesDB[activeRideId];
+      const fare = calcFare(r.category, accKm, accWait);
+      update(ref(db, `smartride/rides/${activeRideId}`), {
+        liveDistKm: +accKm.toFixed(2), liveWaitMin: +accWait.toFixed(1), liveFare: fare
+      });
+    }
+
+    window.finishRide = async function() {
+      if (!activeRideId || !ridesDB[activeRideId] || !currentDriverPhone) return;
+      clearInterval(meterInterval);
+      if (gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
+      await autoUpdateDriverGPS("إنهاء الرحلة");
+
+      const r = ridesDB[activeRideId];
+      let tripFare = calcFare(r.category, accKm, accWait);
+
+      if (r.hasPredefinedDest && r.estimatedFare > 0) {
+        const tol = (Number(settings.priceTolerancePercent) || 15) / 100;
+        if (Math.abs(tripFare - r.estimatedFare) / r.estimatedFare <= tol) tripFare = r.estimatedFare;
+      }
+
+      const cli = clientsDB[r.clientId] || {};
+      const clientPenaltyDue = Number(cli.pendingPenalty || 0);
+      const totalFinalFare = tripFare + clientPenaltyDue;
+
+      const comm = (Number(settings.appCommissionPercent) || 15) / 100;
+      const appFee = +(tripFare * comm).toFixed(2);
+      let bal = Number(driversDB[currentDriverPhone]?.balance || 0);
+      let paidVia = 'cash';
+
+      if (r.paymentMethod === 'wallet' && (cli.wallet || 0) >= totalFinalFare) {
+        paidVia = 'wallet';
+        await update(ref(db, `smartride/clients/${r.clientId}`), {
+          wallet: +(Number(cli.wallet) - totalFinalFare).toFixed(2),
+          pendingPenalty: 0
+        });
+        bal = +(bal + (tripFare - appFee)).toFixed(2);
+      } else {
+        if (clientPenaltyDue > 0) {
+          await update(ref(db, `smartride/clients/${r.clientId}`), { pendingPenalty: 0 });
+        }
+        bal = +(bal - appFee - clientPenaltyDue).toFixed(2);
+      }
+
+      const debtBlock = bal <= -Math.abs(Number(settings.maxDriverDebt) || 200);
+      await update(ref(db, `smartride/drivers/${currentDriverPhone}`), { balance: bal, isBlocked: debtBlock, online: debtBlock ? false : isOnline });
+      await update(ref(db, `smartride/rides/${activeRideId}`), {
+        status: 'completed',
+        finalFare: totalFinalFare,
+        penaltyCollectedInRide: clientPenaltyDue,
+        paidVia
+      });
+
+      lastCompletedRideForRating = r;
+      document.getElementById('drv-invoice-summary').innerHTML = `
+        <b>العميل:</b> ${r.clientName}<br>
+        <b>أجرة المشوار:</b> ${tripFare} ج.م ${clientPenaltyDue > 0 ? `+ غرامة سابقة (${clientPenaltyDue} ج.م)` : ''}<br>
+        <b>الإجمالي للتحصيل:</b> <span style="font-size:1.3rem; font-weight:900; color:#fde047;">${totalFinalFare} ج.م</span>
+      `;
+      document.getElementById('rate-client-modal').style.display = 'flex';
+    };
+
+    window.pickClientStars = function(stars) {
+      chosenStarsForClient = stars;
+      document.querySelectorAll('#drv-rate-stars .star-pick').forEach((b, idx) => b.classList.toggle('active', idx < stars));
+    };
+
+    window.submitClientRating = async function() {
+      if (lastCompletedRideForRating) {
+        const cid = lastCompletedRideForRating.clientId;
+        if (cid && clientsDB[cid]) {
+          const c = clientsDB[cid];
+          const newSum = Number(c.ratingSum || 0) + chosenStarsForClient;
+          const newCnt = Number(c.ratingCount || 0) + 1;
+          const newLowCnt = Number(c.lowRatingCount || 0) + (chosenStarsForClient < 3 ? 1 : 0);
+          const newAvg = newSum / newCnt;
+          const autoBlock = (newAvg < 3.0 && newLowCnt >= 5);
+
+          await update(ref(db, `smartride/clients/${cid}`), {
+            ratingSum: newSum, ratingCount: newCnt, lowRatingCount: newLowCnt,
+            isBlocked: autoBlock ? true : (c.isBlocked || false)
+          });
+        }
+      }
+      lastCompletedRideForRating = null;
+      document.getElementById('rate-client-modal').style.display = 'none';
+    };
+
+    window.toggleOnlineState = async function(checked) {
+      if (!currentDriverPhone) return;
+      await evaluateDriverDocumentsAndBlockStatus();
+      if (checked && driversDB[currentDriverPhone]?.isBlocked) {
+        alert("⛔ حسابك محظور حالياً! انظر سبب الحظر في الشريط الأحمر أعلى الشاشة.");
+        document.getElementById('chk-online').checked = false;
+        return;
+      }
+      isOnline = checked;
+      const lbl = document.getElementById('ui-online-txt');
+      lbl.innerText = checked ? 'أونلاين' : 'أوفلاين';
+      lbl.style.color = checked ? '#4ade80' : '#f87171';
+      await autoUpdateDriverGPS(checked ? "تفعيل أونلاين" : "تحويل أوفلاين");
+    };
+
+    function refreshHeaderUI() {
+      if (!currentDriverPhone || !driversDB[currentDriverPhone]) return;
+      const d = driversDB[currentDriverPhone];
+      const rInfo = getRatingInfo(d);
+      const badge = document.getElementById('hdr-drv-badge');
+      badge.className = `rating-frame ${rInfo.tierClass}`;
+      document.getElementById('ui-drv-name').innerText = d.name;
+      document.getElementById('ui-drv-rating').innerText = rInfo.label;
+      document.getElementById('hdr-drv-photo').src = d.photoUrl || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
+
+      document.getElementById('ui-drv-bal').innerText = d.balance ?? 0;
+      document.getElementById('ui-drv-rej').innerText = d.rejectsCount ?? 0;
+      document.getElementById('ui-drv-miss').innerText = d.missedCount ?? 0;
+      document.getElementById('ui-drv-cat').innerText = settings.categories?.[d.category]?.name || 'مركبة';
+      document.getElementById('ui-drv-model').innerText = d.carModel || '';
+      document.getElementById('ui-drv-color').innerText = d.carColor || '';
+      document.getElementById('ui-drv-plate').innerText = d.carPlate || '';
+    }
+
+    // ================= نظام المراسلات للكابتن بالرقم المرجعي =================
+    window.openDriverMessages = function() {
+      document.getElementById('drv-messages-modal').classList.add('open');
+      backToDriverThreads();
+    };
+    window.closeDriverMessages = function() {
+      document.getElementById('drv-messages-modal').classList.remove('open');
+    };
+    window.backToDriverThreads = function() {
+      openedDrvThreadId = null;
+      document.getElementById('drv-threads-list-view').style.display = 'block';
+      document.getElementById('drv-thread-detail-view').style.display = 'none';
+      renderDrvThreads();
+    };
+
+    window.createDriverThread = async function() {
+      if (!currentDriverPhone) return;
+      const subj = document.getElementById('drv-msg-subj').value.trim();
+      const body = document.getElementById('drv-msg-body').value.trim();
+      if (!subj || !body) return alert("اكتب الموضوع والرسالة!");
+
+      const refNum = "MSG-" + Math.floor(10000 + Math.random() * 90000);
+      const tRef = push(ref(db, 'smartride/messages'));
+      const firstKey = push(ref(db, `smartride/messages/${tRef.key}/replies`)).key;
+
+      await set(tRef, {
+        id: tRef.key,
+        refNumber: refNum,
+        userType: 'driver',
+        userPhone: currentDriverPhone,
+        userName: driversDB[currentDriverPhone]?.name || 'كابتن',
+        subject: subj,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        replies: {
+          [firstKey]: {
+            sender: 'driver',
+            senderName: driversDB[currentDriverPhone]?.name || 'كابتن',
+            text: body,
+            timestamp: Date.now()
+          }
+        }
+      });
+      document.getElementById('drv-msg-subj').value = '';
+      document.getElementById('drv-msg-body').value = '';
+      openDrvThreadPage(tRef.key);
+    };
+
+    function renderDrvThreads() {
+      if (!currentDriverPhone) return;
+      const box = document.getElementById('drv-threads-container');
+      box.innerHTML = '';
+      const list = Object.values(messagesDB).filter(m => m.userPhone === currentDriverPhone).sort((a,b) => b.updatedAt - a.updatedAt);
+      if (list.length === 0) {
+        box.innerHTML = `<div style="color:#94a3b8; text-align:center; padding:12px;">لا توجد مراسلات</div>`;
+        return;
+      }
+      list.forEach(t => {
+        const reps = Object.values(t.replies || {});
+        const div = document.createElement('div');
+        div.style.cssText = 'background:#1e293b; padding:10px; border-radius:8px; margin-bottom:8px; cursor:pointer; border:1px solid #334155;';
+        div.onclick = () => openDrvThreadPage(t.id);
+        div.innerHTML = `
+          <div style="display:flex; justify-content:space-between;">
+            <span style="background:var(--primary); padding:2px 8px; border-radius:5px; font-weight:800; font-size:0.75rem;">${t.refNumber}</span>
+            <small style="color:#94a3b8;">${new Date(t.updatedAt).toLocaleString('ar-EG')}</small>
+          </div>
+          <div style="font-weight:800; margin-top:4px;">${t.subject}</div>
+          <div style="font-size:0.78rem; color:#cbd5e1;">عدد الردود: ${reps.length}</div>
+        `;
+        box.appendChild(div);
+      });
+    }
+
+    window.openDrvThreadPage = function(tid) {
+      openedDrvThreadId = tid;
+      document.getElementById('drv-threads-list-view').style.display = 'none';
+      document.getElementById('drv-thread-detail-view').style.display = 'flex';
+      renderSingleDrvThread(tid);
+    };
+
+    function renderSingleDrvThread(tid) {
+      const t = messagesDB[tid];
+      if (!t) return;
+      document.getElementById('drv-view-ref').innerText = t.refNumber;
+      document.getElementById('drv-view-subj').innerText = t.subject;
+      const box = document.getElementById('drv-view-messages');
+      box.innerHTML = '';
+      Object.values(t.replies || {}).sort((a,b) => a.timestamp - b.timestamp).forEach(r => {
+        const isMe = r.sender !== 'admin';
+        box.innerHTML += `
+          <div class="msg-bubble ${isMe ? 'msg-me' : 'msg-admin'}">
+            <div style="font-weight:800; font-size:0.72rem;">${isMe ? 'أنت' : '🛡️ الإدارة'}</div>
+            <div>${r.text}</div>
+          </div>
+        `;
+      });
+      box.scrollTop = box.scrollHeight;
+    }
+
+    window.sendDriverReply = async function() {
+      if (!openedDrvThreadId || !currentDriverPhone) return;
+      const txt = document.getElementById('drv-reply-inp').value.trim();
+      if (!txt) return;
+      const rRef = push(ref(db, `smartride/messages/${openedDrvThreadId}/replies`));
+      await set(rRef, {
+        sender: 'driver',
+        senderName: driversDB[currentDriverPhone]?.name || 'كابتن',
+        text: txt,
+        timestamp: Date.now()
+      });
+      await update(ref(db, `smartride/messages/${openedDrvThreadId}`), { updatedAt: Date.now() });
+      document.getElementById('drv-reply-inp').value = '';
+    };
+  </script>
+</body>
+</html>
