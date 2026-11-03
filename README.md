@@ -1,2 +1,3 @@
-# LinkSR_Captain
-Captin App
+# Updating Soon
+SMARTRIIDE Captain App
+Thank You
