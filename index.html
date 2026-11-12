@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>تطبيق الكابتن - SmartRide v7.2</title>
+  <title>تطبيق الكابتن - SmartRide v7.3</title>
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -17,7 +17,7 @@
     body { background: var(--dark); color: #fff; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; user-select: none; }
     input, textarea, select { user-select: text; }
 
-    /* شارة الإصدار v7.2 */
+    /* شارة الإصدار v7.3 */
     .ver-badge { background: #10b981; color: #022c22; font-weight: 900; font-size: 0.7rem; padding: 1px 7px; border-radius: 6px; border: 1px solid #a7f3d0; flex-shrink: 0; }
 
     /* ================= الإطار العلوي المستطيل بعرض شاشة الموبايل مع اللمعان التفاعلي المتحرك ================= */
@@ -38,7 +38,6 @@
       box-shadow: 0 0 16px rgba(34, 197, 94, 0.45);
     }
 
-    /* شعاع الإضاءة الدوار كأنه يلف في إطار البرواز */
     .hdr-animated-frame::before {
       content: "";
       position: absolute;
@@ -62,7 +61,6 @@
       z-index: -2;
     }
 
-    /* لمعان نبضي إضافي على حواف البرواز */
     .hdr-animated-frame::after {
       content: "";
       position: absolute;
@@ -85,7 +83,6 @@
       100% { opacity: 0.85; }
     }
 
-    /* فئات ألوان التقييم المعتمدة للإطار المتحرك */
     .hdr-animated-frame.tier-gold {
       --beam-main: #eab308;
       --beam-bright: #fef08a;
@@ -111,7 +108,7 @@
       box-shadow: 0 0 20px rgba(220, 38, 38, 0.7), 0 0 8px rgba(252, 165, 165, 0.5);
     }
 
-    /* البطاقة الداخلية المستطيلة بعرض الشاشة: الصورة على اليمين والبيانات مرتبة عمودياً بجانبها */
+    /* البطاقة الداخلية المستطيلة بعرض الشاشة بالكامل بدون زر القائمة بداخلها */
     .hdr-top-card {
       position: relative;
       background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
@@ -125,13 +122,13 @@
       z-index: 1;
     }
 
-    /* في RTL: العنصر الأول في الفلكس يقع أقصى اليمين (الصورة) ويليها عمود النصوص بعرض الشاشة */
     .drv-main-info {
       display: flex;
       flex-direction: row;
       align-items: center;
       gap: 11px;
       flex: 1;
+      width: 100%;
       min-width: 0;
     }
 
@@ -220,8 +217,12 @@
       flex-shrink: 0;
     }
 
-    .status-row-bar { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: #1e293b; padding: 6px 12px; border-radius: 12px; border: 1px solid #334155; }
-    .live-state-badge { padding: 4px 10px; border-radius: 8px; font-weight: 900; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+    /* الشريط السفلي خارج إطار تعريف الكابتن: يضم زر القائمة الجانبية + حالة الرحلة + أزرار ONLINE/OFFLINE */
+    .status-row-bar { display: flex; justify-content: space-between; align-items: center; gap: 6px; background: #1e293b; padding: 6px 8px; border-radius: 12px; border: 1px solid #334155; width: 100%; }
+    .menu-trigger-btn { background: #0f172a; color: #38bdf8; border: 2px solid #38bdf8; height: 36px; padding: 0 10px; border-radius: 9px; font-size: 0.8rem; font-weight: 900; cursor: pointer; flex-shrink: 0; position: relative; display: inline-flex; align-items: center; gap: 5px; }
+    .unread-dot { position: absolute; top: -4px; left: -4px; width: 11px; height: 11px; border-radius: 50%; background: #ef4444; border: 2px solid #fff; display: none; }
+
+    .live-state-badge { padding: 4px 8px; border-radius: 8px; font-weight: 900; font-size: 0.74rem; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
     .st-idle { background: #064e3b; color: #6ee7b7; border: 1px solid #10b981; }
     .st-new { background: #78350f; color: #fde047; border: 1px solid #f59e0b; }
     .st-wait { background: #1e3a8a; color: #93c5fd; border: 1px solid #3b82f6; }
@@ -229,13 +230,20 @@
     .st-done { background: #334155; color: #f8fafc; border: 1px solid #64748b; }
 
     /* أزرار ONLINE / OFFLINE الكبيرة والواضحة */
-    .giant-status-toggle { display: flex; border-radius: 10px; overflow: hidden; border: 2px solid #475569; flex-shrink: 0; }
-    .status-btn { padding: 7px 14px; font-weight: 900; font-size: 0.82rem; border: none; cursor: pointer; background: #0f172a; color: #64748b; transition: 0.2s; white-space: nowrap; }
+    .giant-status-toggle { display: flex; border-radius: 9px; overflow: hidden; border: 2px solid #475569; flex-shrink: 0; }
+    .status-btn { padding: 6px 11px; font-weight: 900; font-size: 0.78rem; border: none; cursor: pointer; background: #0f172a; color: #64748b; transition: 0.2s; white-space: nowrap; }
     .status-btn.active-on { background: #16a34a; color: #fff; box-shadow: inset 0 0 8px rgba(0,0,0,0.3); }
     .status-btn.active-off { background: #dc2626; color: #fff; box-shadow: inset 0 0 8px rgba(0,0,0,0.3); }
 
-    .menu-trigger-btn { background: #0f172a; color: #38bdf8; border: 2px solid #38bdf8; width: 42px; height: 42px; border-radius: 10px; font-size: 1.25rem; font-weight: 900; cursor: pointer; flex-shrink: 0; position: relative; z-index: 3; }
-    .unread-dot { position: absolute; top: -4px; left: -4px; width: 12px; height: 12px; border-radius: 50%; background: #ef4444; border: 2px solid #fff; display: none; }
+    /* زر الطوارئ البارز أثناء الرحلة */
+    .btn-emergency-bar { background: linear-gradient(135deg, #dc2626, #991b1b); color: #fff; border: 2px solid #fca5a5; padding: 5px 10px; border-radius: 8px; font-size: 0.76rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 0 12px rgba(220,38,38,0.6); animation: pulseEmg 1.6s infinite alternate; }
+    @keyframes pulseEmg { 0% { transform: scale(1); } 100% { transform: scale(1.04); } }
+
+    /* شاشة جاري المعالجة بملء التطبيق (تختفي عند الرد أو بعد 15 ثانية) */
+    .processing-fullscreen-overlay { position: fixed; inset: 0; width: 100vw; height: 100dvh; background: rgba(2, 6, 23, 0.92); z-index: 99999; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; }
+    .processing-fullscreen-overlay.open { display: flex; }
+    .proc-spinner { width: 58px; height: 58px; border: 5px solid #334155; border-top-color: #38bdf8; border-radius: 50%; animation: spinLoader 0.85s linear infinite; margin-bottom: 14px; }
+    @keyframes spinLoader { to { transform: rotate(360deg); } }
 
     /* شريط برومو الكابتن التلقائي (0% عمولة) */
     .drv-promo-bar { display: none; background: #064e3b; border: 1px solid #10b981; padding: 5px 10px; border-radius: 8px; justify-content: space-between; align-items: center; font-size: 0.75rem; font-weight: 800; }
@@ -286,8 +294,9 @@
     #driver-map { width: 100%; height: 100%; }
     .gps-pill { position: absolute; top: 10px; right: 10px; background: rgba(15,23,42,0.92); color: #38bdf8; padding: 5px 12px; border-radius: 20px; font-size: 0.74rem; font-weight: 800; z-index: 15; border: 1px solid #334155; pointer-events: none; }
 
-    /* النبض الراداري لموقع طلب العميل عند الكابتن فقط (يستمر حتى دقيقتين) */
-    .radar-beam-node { position: relative; width: 72px; height: 72px; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+    /* تثبيت نقطة ارتكاز النبض الراداري لموقع العميل لمنع تحركه عند عمل Zoom In / Out */
+    .radar-marker-anchor { width: 20px; height: 20px; position: relative; pointer-events: none; }
+    .radar-beam-node { position: absolute; top: 50%; left: 50%; width: 72px; height: 72px; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; pointer-events: none; }
     .radar-beam-node .dot { width: 15px; height: 15px; background: #dc2626; border: 2px solid #fff; border-radius: 50%; z-index: 3; box-shadow: 0 0 10px #dc2626; }
     .radar-beam-node .wave1, .radar-beam-node .wave2 { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 3px solid #dc2626; background: rgba(220,38,38,0.28); animation: radarPulse 1.8s infinite ease-out; }
     .radar-beam-node .wave2 { animation-delay: 0.9s; }
@@ -318,12 +327,19 @@
 </head>
 <body>
 
+  <!-- شاشة جاري المعالجة بملء التطبيق (تختفي فور استجابة السيرفر أو بعد 15 ثانية تلقائياً) -->
+  <div class="processing-fullscreen-overlay" id="processing-overlay">
+    <div class="proc-spinner"></div>
+    <h3 style="color:#38bdf8; font-size:1.25rem; margin-bottom:6px;">⏳ جاري المعالجة...</h3>
+    <p style="color:#cbd5e1; font-size:0.85rem;">يرجى الانتظار لحظات، جاري تأكيد الطلب مع السيرفر وتحديث الموقع</p>
+  </div>
+
   <!-- شاشة تسجيل دخول الكابتن -->
   <div class="auth-overlay" id="driver-auth-screen">
     <div class="auth-box">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
         <h3 style="color:#38bdf8;">🛞 دخول الكابتن SmartRide</h3>
-        <span class="ver-badge">v7.2</span>
+        <span class="ver-badge">v7.3</span>
       </div>
       <p style="font-size:0.76rem; color:#94a3b8; margin-bottom:12px;">أدخل رقم الموبايل وكلمة المرور السرية المستلمة عبر واتساب</p>
       <label>رقم الهاتف:</label>
@@ -342,7 +358,7 @@
         <div style="font-weight:900; color:#38bdf8;" id="drw-drv-name">كابتن SmartRide</div>
         <div style="font-size:0.78rem; color:#4ade80;" id="drw-drv-bal">الرصيد: 0.00 ج.م</div>
       </div>
-      <button class="menu-trigger-btn" style="width:36px; height:36px; font-size:1rem;" onclick="toggleDriverDrawer(false)">✖</button>
+      <button class="menu-trigger-btn" style="width:36px; height:36px; padding:0; justify-content:center;" onclick="toggleDriverDrawer(false)">✖</button>
     </div>
 
     <button class="drawer-item" onclick="openStatsModal()"><span>📊 تقارير الرحلات</span><span>⬅️</span></button>
@@ -351,7 +367,7 @@
     <button class="drawer-item" style="background:#450a0a; border-color:#ef4444; color:#fecaca; margin-top:auto;" onclick="confirmDriverLogout()"><span>🚪 تسجيل الخروج</span><span>⚠️</span></button>
   </div>
 
-  <!-- ================= الهيدر المستطيل الجديد بعرض الشاشة والبرواز التفاعلي المتحرك ================= -->
+  <!-- ================= الهيدر المستطيل بعرض الشاشة (تم فصل زر القائمة ليكون أسفل الإطار خارجه) ================= -->
   <div class="driver-header">
     <div class="hdr-animated-frame tier-green" id="hdr-rating-frame">
       <div class="hdr-top-card">
@@ -363,7 +379,7 @@
             <!-- السطر الأول: الاسم بعرض الشاشة -->
             <div class="drv-line-1-name">
               <span class="drv-name-big" id="ui-drv-name">كابتن SmartRide</span>
-              <span class="ver-badge">v7.2</span>
+              <span class="ver-badge">v7.3</span>
             </div>
             <!-- السطر الثاني تحت الاسم: التقييم ونسبة القبول وفئة اللون -->
             <div class="drv-line-2-rating">
@@ -381,17 +397,17 @@
             </div>
           </div>
         </div>
-        <button class="menu-trigger-btn" onclick="toggleDriverDrawer(true)" title="القائمة الجانبية">
-          ☰
-          <span class="unread-dot" id="hdr-msg-dot"></span>
-        </button>
       </div>
     </div>
 
-    <!-- شريط حالة الرحلة اللحظية + أزرار ONLINE / OFFLINE الكبيرة -->
+    <!-- الشريط السفلي خارج الإطار: زر القائمة الجانبية + حالة الرحلة اللحظية + أزرار ONLINE / OFFLINE -->
     <div class="status-row-bar">
+      <button class="menu-trigger-btn" onclick="toggleDriverDrawer(true)" title="القائمة الجانبية">
+        ☰ القائمة
+        <span class="unread-dot" id="hdr-msg-dot"></span>
+      </button>
+
       <div>
-        <span style="font-size:0.74rem; color:#94a3b8; font-weight:800;">الحالة:</span>
         <span id="ui-trip-state-badge" class="live-state-badge st-idle">🟢 لا توجد رحلة</span>
       </div>
 
@@ -466,15 +482,16 @@
   <div class="active-ride-workspace" id="active-ride-panel">
     <div>
       <div class="ride-card-box">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <span id="trip-status-badge" style="background:var(--primary); padding:4px 10px; border-radius:6px; font-weight:900; font-size:0.84rem;">في الطريق للعميل</span>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+          <span id="trip-status-badge" style="background:var(--primary); padding:4px 10px; border-radius:6px; font-weight:900; font-size:0.82rem;">في الطريق للعميل</span>
           <div style="display:flex; gap:6px; align-items:center;">
-            <span style="font-size:0.76rem; color:#94a3b8;">كود: <b id="trip-code-lbl" style="color:#fff;"></b></span>
-            <button onclick="toggleMinimizeActiveRide(true)" style="background:#334155; color:#fff; border:none; padding:4px 8px; border-radius:6px; font-size:0.72rem; font-weight:800; cursor:pointer;">🗕 تصغير للخريطة</button>
+            <!-- زر الطوارئ الواضح أثناء الرحلة (إسعاف 123 / نجدة 122) -->
+            <button class="btn-emergency-bar" onclick="openEmergencyPopup()">🚨 طوارئ</button>
+            <span style="font-size:0.75rem; color:#94a3b8;">كود: <b id="trip-code-lbl" style="color:#fff;"></b></span>
+            <button onclick="toggleMinimizeActiveRide(true)" style="background:#334155; color:#fff; border:none; padding:4px 8px; border-radius:6px; font-size:0.72rem; font-weight:800; cursor:pointer;">🗕 للخريطة</button>
           </div>
         </div>
 
-        <!-- إخفاء رقم هاتف العميل من الواجهة مع الاحتفاظ بأزرار الاتصال والواتساب -->
         <div style="font-size:0.85rem; margin-bottom:10px; line-height:1.65;">
           <div>👤 <b>اسم العميل:</b> <span id="active-cli-name" style="color:#38bdf8; font-weight:900;"></span></div>
           <div>🟢 <b>عنوان الانطلاق:</b> <span id="active-pick-addr" style="color:#4ade80; font-weight:800;"></span></div>
@@ -482,7 +499,8 @@
           <div>💳 <b>طريقة الدفع:</b> <span id="active-pay-method" style="font-weight:800;"></span> | ⏱️ <b id="active-eta-lbl" style="color:#38bdf8;">ETA: --</b></div>
         </div>
 
-        <div style="display:flex; gap:8px;">
+        <!-- أزرار الاتصال والواتساب بالعميل (تظهر قبل بدء الرحلة وتختفي تلقائياً بمجرد بدء الرحلة) -->
+        <div id="client-contact-btns-row" style="display:flex; gap:8px;">
           <button class="btn btn-primary" style="flex:1; padding:9px; font-size:0.84rem;" onclick="callClientNow()">📞 اتصال بالعميل</button>
           <button class="btn btn-wa" style="flex:1; padding:9px; font-size:0.84rem;" onclick="whatsappClientNow()">💬 واتساب العميل</button>
         </div>
@@ -497,10 +515,10 @@
         </button>
       </div>
 
-      <!-- العداد الرقمي للمسافة الفعلية والأجرة -->
+      <!-- العداد الرقمي للمسافة الفعلية والأجرة (حد أدنى 40 ج لأول 1.33 كم + تقريب لأقرب 5) -->
       <div class="digital-meter">
-        <div style="font-size:0.78rem; color:#94a3b8;">الأجرة الحالية حسب المسافة الفعلية والوقت</div>
-        <div style="font-size:2rem; font-weight:900; color:#4ade80;"><span id="live-fare-val">0</span> <small style="font-size:0.95rem;">ج.م</small></div>
+        <div style="font-size:0.76rem; color:#94a3b8;">الأجرة الحالية على الشاشة (الحد الأدنى 40 ج شاملة 1.33 كم)</div>
+        <div style="font-size:2.1rem; font-weight:900; color:#4ade80;"><span id="live-fare-val">40</span> <small style="font-size:0.95rem;">ج.م</small></div>
         <div style="display:flex; justify-content:space-around; font-size:0.8rem; color:#cbd5e1; margin-top:4px;">
           <span>تقديرية: <b id="est-km-val">0.00</b> كم</span>
           <span>فعلية مقطوعة: <b id="live-km-val" style="color:#38bdf8;">0.00</b> كم</span>
@@ -522,6 +540,19 @@
     </div>
   </div>
 
+  <!-- نافذة الطوارئ المنبثقة (الإسعاف 123 والنجدة 122) -->
+  <div class="popup-detail-overlay" id="emergency-popup-modal">
+    <div class="popup-detail-card" style="border-color:#ef4444; text-align:center;">
+      <h3 style="color:#f87171; margin-bottom:8px;">🚨 أرقام الطوارئ السريعة</h3>
+      <p style="font-size:0.8rem; color:#cbd5e1; margin-bottom:14px;">اضغط للاتصال المباشر والفوري في حالات الطوارئ أثناء الرحلة:</p>
+      <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:14px;">
+        <button class="btn btn-danger" style="height:48px; font-size:1rem;" onclick="openExternalNativeLink('tel:123')">🚑 الاتصال بالإسعاف (123)</button>
+        <button class="btn btn-warning" style="height:48px; font-size:1rem;" onclick="openExternalNativeLink('tel:122')">🚓 الاتصال بشرطة النجدة (122)</button>
+      </div>
+      <button class="btn btn-primary" onclick="document.getElementById('emergency-popup-modal').classList.remove('open')">إغلاق ✖</button>
+    </div>
+  </div>
+
   <!-- التذكرة المصغرة (Ticket) للرحلة المتزامنة التالية أو الرحلة الحالية عند تصغيرها -->
   <div class="floating-ticket-bar" id="floating-ticket-bar">
     <div style="font-size:0.8rem; line-height:1.4;" id="floating-ticket-info"></div>
@@ -530,7 +561,7 @@
 
   <!-- ================= الخريطة النهارية البيضاء بعناصر إنجليزية ================= -->
   <div class="map-area" id="map-container-area">
-    <div class="gps-pill" id="gps-live-badge">🛰️ رادار الطلبات نشط (v7.2)</div>
+    <div class="gps-pill" id="gps-live-badge">🛰️ رادار الطلبات نشط (v7.3)</div>
     <div id="driver-map"></div>
   </div>
 
@@ -611,7 +642,6 @@
     </div>
     <div style="flex:1; overflow-y:auto; padding:12px; max-width:620px; width:100%; margin:0 auto;">
 
-      <!-- العرض الأول: قائمة عناوين الرسائل المختصرة (Inbox List) وإرسال رسالة جديدة -->
       <div id="drv-msg-list-view">
         <div class="ride-card-box">
           <h4 style="color:#38bdf8; margin-bottom:8px;">➕ إرسال رسالة أو شكوى جديدة للإدارة</h4>
@@ -628,7 +658,6 @@
         <div id="drv-threads-box"></div>
       </div>
 
-      <!-- العرض الثاني: الصفحة المستقلة لتفاصيل الرسالة والرد عليها (Full Message View) -->
       <div id="drv-msg-detail-page" style="display:none; flex-direction:column; height:80dvh;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
           <b id="drv-open-msg-title" style="color:#38bdf8; font-size:0.9rem;"></b>
@@ -636,7 +665,6 @@
         </div>
         <div id="drv-chat-bubbles" style="flex:1; overflow-y:auto; background:#1e293b; padding:12px; border-radius:10px; border:1px solid #334155; margin-bottom:8px;"></div>
 
-        <!-- يظهر مربع الرد فقط إذا كانت الرسالة قابلة للرد (allowReply !== false) -->
         <div id="drv-reply-input-area" style="display:flex; gap:6px;">
           <input type="text" id="drv-reply-txt" placeholder="اكتب ردك هنا..." style="margin:0;">
           <button class="btn btn-primary" style="width:110px;" onclick="sendDrvReply()">إرسال</button>
@@ -677,6 +705,24 @@
       delivery: "📦 توصيل طلبات"
     };
     const DEFAULT_AVATAR = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2338bdf8'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/></svg>";
+
+    // دالة إظهار وإخفاء شاشة "جاري المعالجة" بمهلة أقصاها 15 ثانية
+    let processingTimeoutHandle = null;
+    window.showProcessingOverlay = function() {
+      clearTimeout(processingTimeoutHandle);
+      document.getElementById('processing-overlay').classList.add('open');
+      processingTimeoutHandle = setTimeout(() => {
+        document.getElementById('processing-overlay').classList.remove('open');
+      }, 15000);
+    };
+    window.hideProcessingOverlay = function() {
+      clearTimeout(processingTimeoutHandle);
+      document.getElementById('processing-overlay').classList.remove('open');
+    };
+
+    window.openEmergencyPopup = function() {
+      document.getElementById('emergency-popup-modal').classList.add('open');
+    };
 
     // الجسر الأصلي للأندرويد فقط بدون أي صوت HTML لمنع تداخل الأصوات
     window.triggerIncomingOrderAlarm = function(clientName = "عميل جديد", distText = "", detailsText = "") {
@@ -722,7 +768,43 @@
     let notifiedApproachAlertSet = new Set();
     let geocodingCache = {};
 
-    // تحويل الإحداثيات إلى عنوان مقروء تلقائياً إذا لم يكن نص العنوان مسجلاً في الطلب
+    // دالة التقريب لأقرب 5 حسب القاعدة المطلوبة (51 -> 50، 56 -> 55، 63 -> 65)
+    function roundToNearestFive(amount) {
+      return Math.round(Number(amount || 0) / 5) * 5;
+    }
+
+    // حساب أجرة الرحلة بالعداد: الحد الأدنى 40 جنيهاً ويشمل أول 1.33 كم مجاناً، ثم تقريب الناتج لأقرب 5
+    function calcMeterFare(catKey, distKm, waitMin) {
+      const c = settings.categories?.[catKey] || { base: 15, perKm: 7, perMin: 1, minFare: 40 };
+      const minFareVal = Math.max(40, Number(c.minFare || 40));
+      const freeIncludedKm = Number(settings.includedFreeKm ?? 1.33);
+      const extraKm = Math.max(0, Number(distKm || 0) - freeIncludedKm);
+      const rawFare = minFareVal + (extraKm * Number(c.perKm || 7)) + (Number(waitMin || 0) * Number(c.perMin || 1));
+      return Math.max(minFareVal, roundToNearestFive(rawFare));
+    }
+
+    // مقارنة الكباتن في التوزيع المتوازي: الأفضلية للأقرب وتقييمه أعلى، ثم للأقرب، ثم للأعلى تقييماً
+    function compareParallelCandidates(a, b) {
+      const mode = settings.parallelPriorityOrder || 'closest_highest_then_closest_then_highest';
+      const distDiff = Math.abs(Number(a.distKm || 0) - Number(b.distKm || 0));
+      const rateDiff = Math.abs(Number(a.rating || 4) - Number(b.rating || 4));
+
+      if (mode === 'closest_first') {
+        if (distDiff > 0.05) return a.distKm - b.distKm;
+        return b.rating - a.rating;
+      }
+      if (mode === 'highest_rating_first') {
+        if (rateDiff > 0.05) return b.rating - a.rating;
+        return a.distKm - b.distKm;
+      }
+      // الوضع الافتراضي المتفق عليه: الأقرب وتقييمه أعلى معاً، ثم الأقرب مسافة، ثم الأعلى تقييماً
+      if (a.distKm <= b.distKm && a.rating >= b.rating && (distDiff > 0.01 || rateDiff > 0.01)) return -1;
+      if (b.distKm <= a.distKm && b.rating >= a.rating && (distDiff > 0.01 || rateDiff > 0.01)) return 1;
+      if (distDiff > 0.15) return a.distKm - b.distKm;
+      if (rateDiff > 0.01) return b.rating - a.rating;
+      return (a.timestamp || 0) - (b.timestamp || 0);
+    }
+
     async function ensureReadableAddress(coordsObj, existingAddress, fallbackLabel) {
       if (existingAddress && String(existingAddress).trim().length > 3 && !String(existingAddress).includes('تلقائي')) {
         return existingAddress;
@@ -761,7 +843,6 @@
 
     let mapMarkers = [];
 
-    // حساب تقييم الكابتن ونسبة القبول وفئة اللون المتفق عليها (ذهبي / أخضر / برتقالي محمر)
     function getDriverRatingAndAcc(d) {
       const ratingsArr = d?.ratingsList ? Object.values(d.ratingsList) : [];
       let avg = 4.0;
@@ -800,7 +881,6 @@
       document.getElementById('drv-popup-detail-modal').classList.add('open');
     }
 
-    // التحقق من صلاحية البرومو كود (أولوية العدد إن كان > 0، وإلا فالتاريخ من startDate إلى endDate)
     function isPromoCodeCurrentlyValid(p, userPhone) {
       if (!p || p.status !== 'active') return false;
       const today = new Date().toISOString().slice(0, 10);
@@ -911,7 +991,7 @@
             }
           }
           resolve(myPos);
-        }, () => resolve(myPos), { enableHighAccuracy: true, timeout: 5000 });
+        }, () => resolve(myPos), { enableHighAccuracy: true, timeout: 4500 });
       });
     }
     setInterval(() => autoUpdateDriverGPS(false), 30000);
@@ -963,7 +1043,6 @@
       const m = getDriverRatingAndAcc(d);
       const safeName = d.name || d.driverName || `كابتن (${currentDriverPhone})`;
 
-      // تطبيق لون فئة التقييم التفاعلي المتحرك على الإطار المستطيل
       const frameEl = document.getElementById('hdr-rating-frame');
       if (frameEl) {
         frameEl.className = `hdr-animated-frame ${m.tierClass}`;
@@ -987,7 +1066,6 @@
       document.getElementById('ui-drv-color').innerText = d.carColor || '---';
       document.getElementById('ui-drv-plate').innerText = d.carPlate || '---';
 
-      // فحص الحظر أو تجاوز سقف المديونية
       const maxDebt = Math.abs(Number(settings.maxDriverDebt || 200));
       const blkBanner = document.getElementById('drv-block-banner');
       if (d.isBlocked || bal <= -maxDebt) {
@@ -1023,6 +1101,11 @@
     async function handleIncomingAndActiveRide() {
       if (!currentDriverPhone) return;
 
+      // إخفاء شاشة "جاري المعالجة" فوراً إذا استجاب السيرفر وتم تعيين الرحلة
+      if (currentOfferId && ridesDB[currentOfferId] && ridesDB[currentOfferId].status !== 'offering') {
+        hideProcessingOverlay();
+      }
+
       // إشعار الكابتن فوراً إذا فاز بالطلب المتوازي كابتن آخر
       if (currentOfferId && ridesDB[currentOfferId]) {
         const prevOfferRide = ridesDB[currentOfferId];
@@ -1031,9 +1114,10 @@
             notifiedParallelLostSet.add(currentOfferId);
             stopIncomingOrderAlarm();
             clearInterval(offerTimer);
+            hideProcessingOverlay();
             document.getElementById('incoming-fullscreen-modal').classList.remove('open');
             currentOfferId = null;
-            alert("ℹ️ تم تعيين الطلب إلى كابتن آخر وفق أولوية التقييم والقرب.");
+            alert("ℹ️ تم تعيين الطلب إلى كابتن آخر وفق أولوية القرب والتقييم.");
           }
         }
       }
@@ -1057,7 +1141,6 @@
         document.getElementById('incoming-fullscreen-modal').classList.remove('open');
       }
 
-      // فحص تنبيه الاقتراب من منطقة الطلب (20 ثانية)
       const approachRadius = Number(settings.approachAlertRadiusKm || 6);
       const now = Date.now();
       const waitingNearRide = Object.values(ridesDB).find(r =>
@@ -1100,6 +1183,7 @@
       queuedNextRideId = queuedRide ? queuedRide.id : null;
 
       if (primaryRide) {
+        hideProcessingOverlay();
         document.getElementById('trip-code-lbl').innerText = primaryRide.safetyCode || primaryRide.id.slice(-5);
         document.getElementById('active-cli-name').innerText = primaryRide.clientName || 'عميل';
 
@@ -1117,7 +1201,9 @@
         document.getElementById('est-km-val').innerText = estKm;
         document.getElementById('live-km-val').innerText = actKm;
         document.getElementById('live-wait-val').innerText = Number(primaryRide.liveWaitMin || accWait || 0).toFixed(1);
-        document.getElementById('live-fare-val').innerText = primaryRide.liveFare || primaryRide.estimatedFare || settings.categories?.[primaryRide.category]?.minFare || 30;
+
+        const displayedScreenFare = Number(primaryRide.liveFare || calcMeterFare(primaryRide.category, Number(actKm), Number(primaryRide.liveWaitMin || 0)));
+        document.getElementById('live-fare-val').innerText = displayedScreenFare;
 
         const targetPt = primaryRide.status === 'in_progress' && primaryRide.dropoff?.lat ? primaryRide.dropoff : primaryRide.pickup;
         if (targetPt && targetPt.lat) {
@@ -1126,6 +1212,8 @@
           document.getElementById('active-eta-lbl').innerText = `المتبقي ${distRem.toFixed(2)} كم (~${etaMin} د)`;
         }
 
+        const contactRow = document.getElementById('client-contact-btns-row');
+
         if (primaryRide.status === 'accepted') {
           document.getElementById('trip-status-badge').innerText = "🚙 في الطريق للعميل";
           document.getElementById('btn-arrived').style.display = 'inline-flex';
@@ -1133,6 +1221,8 @@
           document.getElementById('btn-finish').style.display = 'none';
           document.getElementById('btn-cancel-accepted').style.display = 'inline-flex';
           document.getElementById('wait-customer-box').style.display = 'none';
+          // إظهار أزرار الاتصال والواتساب قبل ركوب العميل
+          if (contactRow) contactRow.style.display = 'flex';
         } else if (primaryRide.status === 'arrived') {
           document.getElementById('trip-status-badge').innerText = "📍 وصلت وبانتظار العميل";
           document.getElementById('btn-arrived').style.display = 'none';
@@ -1140,6 +1230,7 @@
           document.getElementById('btn-finish').style.display = 'none';
           document.getElementById('btn-cancel-accepted').style.display = 'inline-flex';
           document.getElementById('wait-customer-box').style.display = 'block';
+          if (contactRow) contactRow.style.display = 'flex';
           run5MinWaitTimer(primaryRide.arrivedAt);
         } else if (primaryRide.status === 'in_progress') {
           document.getElementById('trip-status-badge').innerText = "🚀 الرحلة النشطة جارية";
@@ -1148,6 +1239,8 @@
           document.getElementById('btn-finish').style.display = 'inline-flex';
           document.getElementById('btn-cancel-accepted').style.display = 'none';
           document.getElementById('wait-customer-box').style.display = 'none';
+          // إخفاء زري الاتصال والواتساب بمجرد ضغط الكابتن على بدء الرحلة لأن العميل أصبح داخل السيارة
+          if (contactRow) contactRow.style.display = 'none';
         }
       }
 
@@ -1158,7 +1251,7 @@
         ticketInfo.innerHTML = `🎫 <b>تذكرة رحلة متزامنة تالية (${queuedRide.safetyCode || ''}):</b><br>👤 ${queuedRide.clientName} | من: ${queuedRide.pickupAddress || 'موقع قريب'}`;
       } else if (primaryRide && isActiveRideMinimized) {
         ticketBar.style.display = 'flex';
-        ticketInfo.innerHTML = `🚖 <b>رحلتك الجارية مصغرة (${primaryRide.safetyCode || ''}):</b><br>👤 ${primaryRide.clientName} | الأجرة: ${primaryRide.liveFare || primaryRide.estimatedFare || 0} ج.م`;
+        ticketInfo.innerHTML = `🚖 <b>رحلتك الجارية مصغرة (${primaryRide.safetyCode || ''}):</b><br>👤 ${primaryRide.clientName} | الأجرة: ${primaryRide.liveFare || 40} ج.م`;
       } else {
         ticketBar.style.display = 'none';
       }
@@ -1180,9 +1273,8 @@
         : 'وجهة مفتوحة (يُحدد السعر بالعداد عند الوصول)';
 
       const estKmTxt = ride.hasPredefinedDest ? `${Number(ride.estimatedDistanceKm || 0).toFixed(2)} كم` : 'حسب السير';
-      const estFareTxt = ride.hasPredefinedDest ? `${ride.estimatedFare} ج.م` : 'بالعداد';
+      const estFareTxt = ride.hasPredefinedDest ? `${ride.estimatedFare} ج.م` : 'بالعداد (حد أدنى 40 ج)';
 
-      // عرض تقييم العميل الفعلي
       const cliObj = clientsDB[ride.clientId] || {};
       const cliRatings = cliObj.ratingsList ? Object.values(cliObj.ratingsList) : [];
       const cliAvg = cliRatings.length ? (cliRatings.reduce((a,b)=>a+Number(b.stars||4),0)/cliRatings.length).toFixed(1) : '4.0';
@@ -1224,64 +1316,80 @@
       }, 3500);
     };
 
+    // قبول الطلب مع عرض شاشة "جاري المعالجة" بملء التطبيق حتى يرد السيرفر (أو تختفي بعد 15 ثانية)
     window.onAcceptClick = async function() {
       stopIncomingOrderAlarm();
       if (!currentOfferId || !currentDriverPhone) return;
       clearInterval(offerTimer);
-      await autoUpdateDriverGPS(true);
-
-      const d = driversDB[currentDriverPhone] || {};
-      const m = getDriverRatingAndAcc(d);
-      const rSnap = await get(ref(db, `smartride/rides/${currentOfferId}`));
-      if (!rSnap.exists()) return;
-      const r = rSnap.val();
-
-      if (r.status !== 'offering') {
-        document.getElementById('incoming-fullscreen-modal').classList.remove('open');
-        return alert("ℹ️ تم تعيين هذا الطلب لكابتن آخر أو انتهت مهلته.");
-      }
-
-      await update(ref(db, `smartride/drivers/${currentDriverPhone}`), {
-        acceptedClicksCount: Number(d.acceptedClicksCount || 0) + 1,
-        rejectsCount: 0
-      });
-
-      const distNow = haversineKm(myPos.lat, myPos.lng, r.pickup.lat, r.pickup.lng);
-
-      // حساب الوقت المرجح لإنهاء الرحلة الحالية إذا كانت رحلة متزامنة (Chained Ride <= 1km)
-      let calcFinishMin = r.chainedEstFinishMin || 4;
-      if ((r.isChainedOffer || activeRideId) && activeRideId && ridesDB[activeRideId]?.dropoff) {
-        const curDrop = ridesDB[activeRideId].dropoff;
-        const remKm = haversineKm(myPos.lat, myPos.lng, curDrop.lat, curDrop.lng);
-        calcFinishMin = Math.max(2, Math.round(remKm * 2.4));
-      }
-
-      if (r.dispatchMode === 'parallel') {
-        await set(ref(db, `smartride/rides/${currentOfferId}/parallelAcceptances/${currentDriverPhone}`), {
-          driverId: currentDriverPhone,
-          driverName: d.name || 'كابتن',
-          rating: m.avg,
-          distKm: +distNow.toFixed(3),
-          lat: myPos.lat,
-          lng: myPos.lng,
-          estFinishMin: calcFinishMin,
-          timestamp: Date.now()
-        });
-        setTimeout(() => finalizeParallelWinnerIfStillOffering(currentOfferId), 850);
-      } else {
-        const nextSt = (r.isChainedOffer || activeRideId) ? 'queued_next' : 'accepted';
-        await update(ref(db, `smartride/rides/${currentOfferId}`), {
-          status: nextSt,
-          driverId: currentDriverPhone,
-          driverPhone: currentDriverPhone,
-          driverName: d.name || 'كابتن',
-          acceptedAt: Date.now(),
-          chainedEstFinishMin: calcFinishMin,
-          driverAcceptPoint: { lat: myPos.lat, lng: myPos.lng, timestamp: Date.now() },
-          offeredToDriverId: null
-        });
-      }
       document.getElementById('incoming-fullscreen-modal').classList.remove('open');
+
+      showProcessingOverlay();
+
+      try {
+        await autoUpdateDriverGPS(true);
+
+        const d = driversDB[currentDriverPhone] || {};
+        const m = getDriverRatingAndAcc(d);
+        const rSnap = await get(ref(db, `smartride/rides/${currentOfferId}`));
+        if (!rSnap.exists()) {
+          hideProcessingOverlay();
+          return;
+        }
+        const r = rSnap.val();
+
+        if (r.status !== 'offering') {
+          hideProcessingOverlay();
+          return alert("ℹ️ تم تعيين هذا الطلب لكابتن آخر أو انتهت مهلته.");
+        }
+
+        await update(ref(db, `smartride/drivers/${currentDriverPhone}`), {
+          acceptedClicksCount: Number(d.acceptedClicksCount || 0) + 1,
+          rejectsCount: 0
+        });
+
+        const distNow = haversineKm(myPos.lat, myPos.lng, r.pickup.lat, r.pickup.lng);
+
+        let calcFinishMin = r.chainedEstFinishMin || 4;
+        if ((r.isChainedOffer || activeRideId) && activeRideId && ridesDB[activeRideId]?.dropoff) {
+          const curDrop = ridesDB[activeRideId].dropoff;
+          const remKm = haversineKm(myPos.lat, myPos.lng, curDrop.lat, curDrop.lng);
+          calcFinishMin = Math.max(2, Math.round(remKm * 2.4));
+        }
+
+        if (r.dispatchMode === 'parallel') {
+          const targetOfferId = currentOfferId;
+          await set(ref(db, `smartride/rides/${targetOfferId}/parallelAcceptances/${currentDriverPhone}`), {
+            driverId: currentDriverPhone,
+            driverName: d.name || 'كابتن',
+            rating: m.avg,
+            distKm: +distNow.toFixed(3),
+            lat: myPos.lat,
+            lng: myPos.lng,
+            estFinishMin: calcFinishMin,
+            timestamp: Date.now()
+          });
+          setTimeout(async () => {
+            await finalizeParallelWinnerIfStillOffering(targetOfferId);
+            hideProcessingOverlay();
+          }, 850);
+        } else {
+          const nextSt = (r.isChainedOffer || activeRideId) ? 'queued_next' : 'accepted';
+          await update(ref(db, `smartride/rides/${currentOfferId}`), {
+            status: nextSt,
+            driverId: currentDriverPhone,
+            driverPhone: currentDriverPhone,
+            driverName: d.name || 'كابتن',
+            acceptedAt: Date.now(),
+            chainedEstFinishMin: calcFinishMin,
+            driverAcceptPoint: { lat: myPos.lat, lng: myPos.lng, timestamp: Date.now() },
+            offeredToDriverId: null
+          });
+          hideProcessingOverlay();
+        }
+      } catch (err) {
+        hideProcessingOverlay();
+        alert("تعذر الاتصال بالسيرفر، حاول مرة أخرى.");
+      }
     };
 
     async function finalizeParallelWinnerIfStillOffering(rideId) {
@@ -1291,7 +1399,7 @@
       if (r.status !== 'offering' || !r.parallelAcceptances) return;
 
       const list = Object.values(r.parallelAcceptances);
-      list.sort((a, b) => (b.rating !== a.rating) ? (b.rating - a.rating) : (a.distKm - b.distKm));
+      list.sort(compareParallelCandidates);
       const win = list[0];
       const nextSt = ((r.isChainedOffer || activeRideId) && win.driverId === currentDriverPhone) ? 'queued_next' : 'accepted';
 
@@ -1452,7 +1560,11 @@
       const now = Date.now();
       lastGPS = { lat: myPos.lat, lng: myPos.lng, time: now };
       const r = ridesDB[activeRideId];
-      const base = settings.categories?.[r.category]?.base || 15;
+      const initialScreenFare = calcMeterFare(r.category, 0, 0);
+
+      // إخفاء زري الاتصال والواتساب بالعميل فوراً عند بدء الرحلة
+      const contactRow = document.getElementById('client-contact-btns-row');
+      if (contactRow) contactRow.style.display = 'none';
 
       await update(ref(db, `smartride/rides/${activeRideId}`), {
         status: 'in_progress',
@@ -1461,7 +1573,7 @@
         liveDistKm: 0,
         actualDistanceKm: 0,
         liveWaitMin: 0,
-        liveFare: base
+        liveFare: initialScreenFare
       });
 
       if (navigator.geolocation) {
@@ -1489,15 +1601,11 @@
       }, 5000);
     };
 
-    function calcMeterFare(catKey, distKm, waitMin) {
-      const c = settings.categories?.[catKey] || { base: 15, perKm: 7, perMin: 1, minFare: 30 };
-      return Math.max(Number(c.minFare || 30), Math.round(Number(c.base || 15) + distKm * Number(c.perKm || 7) + waitMin * Number(c.perMin || 1)));
-    }
-
     function syncLiveMeter() {
       if (!activeRideId || !ridesDB[activeRideId]) return;
       const r = ridesDB[activeRideId];
       const fare = calcMeterFare(r.category, accKm, accWait);
+      document.getElementById('live-fare-val').innerText = fare;
       update(ref(db, `smartride/rides/${activeRideId}`), {
         liveDistKm: +accKm.toFixed(2),
         actualDistanceKm: +accKm.toFixed(2),
@@ -1506,6 +1614,7 @@
       });
     }
 
+    // إنهاء الرحلة: الاعتماد حصرياً على السعر الظاهر على شاشة الحساب + منع خصم محفظة العميل في رحلات الكاش
     window.finishRide = async function() {
       if (!activeRideId || !ridesDB[activeRideId]) return;
       clearInterval(meterTimer);
@@ -1514,10 +1623,11 @@
 
       const r = ridesDB[activeRideId];
       const finalDistKm = +Math.max(accKm, Number(r.liveDistKm || 0)).toFixed(2);
-      let tripFare = calcMeterFare(r.category, finalDistKm, accWait);
-      if (r.hasPredefinedDest && r.estimatedFare > 0 && finalDistKm === 0) {
-        tripFare = Number(r.estimatedFare);
-      }
+
+      // أخذ سعر الرحلة الفعلي الظاهر على شاشة العداد (وليس السعر التقديري نهائياً)
+      const screenFareText = Number(document.getElementById('live-fare-val')?.innerText || 0);
+      const computedMeterFare = calcMeterFare(r.category, finalDistKm, Number(r.liveWaitMin || accWait || 0));
+      const tripFare = screenFareText >= 40 ? screenFareText : (Number(r.liveFare) >= 40 ? Number(r.liveFare) : computedMeterFare);
 
       const cli = clientsDB[r.clientId] || {};
       const penaltyAttached = Number(cli.pendingPenalty || 0);
@@ -1538,19 +1648,18 @@
         }
       }
 
-      const grossBeforeWallet = Math.max(0, tripFare + penaltyAttached - promoDiscountAmount);
-      const cliWalletBal = Number(cli.wallet || 0);
+      const grossBeforeWallet = Math.max(0, roundToNearestFive(tripFare + penaltyAttached - promoDiscountAmount));
+      const cliWalletBal = Math.max(0, Number(cli.wallet || 0));
+
+      // إصلاح حاسم: إذا اختار العميل الدفع نقداً (cash)، لا يُخصم أي مبلغ من محفظته نهائياً
       let walletCreditUsed = 0;
       let clientNetPayableCash = grossBeforeWallet;
       let paidVia = 'cash';
 
-      if (r.paymentMethod === 'wallet' && cliWalletBal >= grossBeforeWallet) {
-        walletCreditUsed = grossBeforeWallet;
-        clientNetPayableCash = 0;
-        paidVia = 'wallet';
-      } else if (cliWalletBal > 0) {
+      if (r.paymentMethod === 'wallet' && cliWalletBal > 0) {
         walletCreditUsed = Math.min(cliWalletBal, grossBeforeWallet);
         clientNetPayableCash = +(grossBeforeWallet - walletCreditUsed).toFixed(2);
+        paidVia = clientNetPayableCash === 0 ? 'wallet' : 'wallet_and_cash';
       }
 
       pendingSettlementData = {
@@ -1569,10 +1678,10 @@
 
       document.getElementById('drv-invoice-summary').innerHTML = `
         <div>📏 <b>المسافة التقديرية:</b> ${Number(r.estimatedDistanceKm || 0).toFixed(2)} كم | <b>المسافة الفعلية:</b> <span style="color:#38bdf8; font-weight:900;">${finalDistKm} كم</span></div>
-        <div>💵 <b>أجرة الرحلة الأساسية:</b> ${tripFare.toFixed(2)} ج.م</div>
+        <div>💵 <b>أجرة الرحلة على شاشة الحساب:</b> <b style="color:#4ade80;">${tripFare.toFixed(2)} ج.م</b></div>
         ${penaltyAttached > 0 ? `<div style="color:#f87171;">➕ <b>تسوية غرامة إلغاء سابقة على العميل:</b> +${penaltyAttached.toFixed(2)} ج.م</div>` : ''}
         ${promoDiscountAmount > 0 ? `<div style="color:#4ade80;">🎁 <b>خصم البرومو كود:</b> -${promoDiscountAmount.toFixed(2)} ج.م</div>` : ''}
-        ${walletCreditUsed > 0 ? `<div style="color:#38bdf8;">👛 <b>مخصوم من محفظة العميل:</b> -${walletCreditUsed.toFixed(2)} ج.م</div>` : ''}
+        ${walletCreditUsed > 0 ? `<div style="color:#38bdf8;">👛 <b>مخصوم من محفظة العميل (لأنه اختار محفظة):</b> -${walletCreditUsed.toFixed(2)} ج.م</div>` : ''}
         <hr style="border-color:#334155; margin:6px 0;">
         <div style="font-size:1rem;">💰 <b>المطلوب تحصيله نقداً من العميل الآن:</b> <span style="color:#fde047; font-weight:900; font-size:1.25rem;">${clientNetPayableCash.toFixed(2)} ج.م</span></div>
       `;
@@ -1597,7 +1706,7 @@
         lbl.innerText = `⚠️ المبلغ المدخل أقل من المطلوب نقداً (${reqCash} ج.م)!`;
       } else {
         lbl.style.color = '#a7f3d0';
-        lbl.innerText = `✅ المبلغ مطابق لقيمة الأجرة المطلوبة نقداً (لا يوجد فائض).`;
+        lbl.innerText = `✅ المبلغ مطابق لقيمة الأجرة المطلوبة نقداً (لن يتغير رصيد محفظة العميل).`;
       }
     };
 
@@ -1626,7 +1735,7 @@
           return;
         }
 
-        const overpaymentCredited = +(cashReceived - s.clientNetPayableCash).toFixed(2);
+        const overpaymentCredited = Math.max(0, +(cashReceived - s.clientNetPayableCash).toFixed(2));
 
         const dObj = driversDB[currentDriverPhone] || {};
         const dPromoCode = dObj.activeDriverPromoCode;
@@ -1643,10 +1752,13 @@
         const adminTripFee = +(s.tripFare * commRate).toFixed(2);
         const driverTripNet = +(s.tripFare - adminTripFee).toFixed(2);
 
-        // 1. تحديث محفظة العميل
-        const cliObj = clientsDB[s.rideObj.clientId] || {};
+        // 1. تحديث محفظة العميل بدقة (في الدفع النقدي s.walletCreditUsed = 0 فلا ينقص من محفظته أي شيء إطلاقاً)
+        const cliSnap = await get(ref(db, `smartride/clients/${s.rideObj.clientId}`));
+        const cliObj = cliSnap.exists() ? cliSnap.val() : (clientsDB[s.rideObj.clientId] || {});
         const cliBefore = Number(cliObj.wallet || 0);
-        const newClientWallet = +(cliBefore - s.walletCreditUsed + overpaymentCredited).toFixed(2);
+        const walletNetDelta = +(overpaymentCredited - s.walletCreditUsed).toFixed(2);
+        const newClientWallet = +(cliBefore + walletNetDelta).toFixed(2);
+
         await update(ref(db, `smartride/clients/${s.rideObj.clientId}`), {
           wallet: newClientWallet,
           pendingPenalty: 0,
@@ -1730,13 +1842,17 @@
           rideId: s.rideId,
           type: overpaymentCredited > 0
             ? `رحلة مكتملة + إيداع فائض نقدي لمحفظة العميل (+${overpaymentCredited} ج)`
-            : (isCommissionWaived ? `رحلة مكتملة (إعفاء 0% عمولة ببرومو ${dPromoCode})` : 'رحلة مكتملة'),
+            : (s.walletCreditUsed > 0
+              ? `رحلة مكتملة (خصم من محفظة العميل -${s.walletCreditUsed} ج)`
+              : (isCommissionWaived ? `رحلة مكتملة نقداً (إعفاء 0% عمولة ببرومو ${dPromoCode})` : 'رحلة مكتملة نقداً (كاش)')),
           fare: s.tripFare,
           cashReceived,
-          overpaymentCredited,
+          overpaymentCredited: walletNetDelta,
           driverProfit: driverTripNet,
           balanceBefore: curDrvBal,
           balanceAfter: updatedDrvBal,
+          clientWalletBefore: cliBefore,
+          clientWalletAfter: newClientWallet,
           adminShare: adminTripFee,
           timestamp: completedAt
         });
@@ -1793,7 +1909,7 @@
       }
     };
 
-    // رسم الخريطة وعلامة النبض الراداري لموقع طلب العميل عند الكابتن فقط (طوال مدة البحث حتى دقيقتين)
+    // رسم الخريطة وعلامة النبض الراداري لموقع طلب العميل بثبات تام عند التكبير أو التصغير (anchor: 'center')
     function renderRadarMap() {
       mapMarkers.forEach(m => m.remove());
       mapMarkers = [];
@@ -1817,25 +1933,37 @@
       Object.values(ridesDB).forEach(r => {
         if (!r) return;
         const isStillWithin2Min = !r.radarExpiresAt || now < r.radarExpiresAt;
-        if (['offering', 'searching', 'searching_wait_20s'].includes(r.status) && isStillWithin2Min && r.pickup && r.pickup.lat) {
+        if (['offering', 'searching', 'searching_wait_20s'].includes(r.status) && isStillWithin2Min && r.pickup && r.pickup.lat != null && r.pickup.lng != null) {
           pulseCount++;
-          const el = document.createElement('div');
-          el.className = 'radar-beam-node';
-          el.innerHTML = `<div class="wave1"></div><div class="wave2"></div><div class="dot"></div>`;
-          mapMarkers.push(new mapboxgl.Marker(el).setLngLat([r.pickup.lng, r.pickup.lat]).addTo(map));
+          const anchorWrap = document.createElement('div');
+          anchorWrap.className = 'radar-marker-anchor';
+          anchorWrap.innerHTML = `<div class="radar-beam-node"><div class="wave1"></div><div class="wave2"></div><div class="dot"></div></div>`;
+          mapMarkers.push(
+            new mapboxgl.Marker({ element: anchorWrap, anchor: 'center' })
+              .setLngLat([Number(r.pickup.lng), Number(r.pickup.lat)])
+              .addTo(map)
+          );
         }
-        if ((r.id === currentOfferId || r.id === activeRideId) && r.dropoff && r.dropoff.lat) {
+        if ((r.id === currentOfferId || r.id === activeRideId) && r.dropoff && r.dropoff.lat != null && r.dropoff.lng != null) {
           const dEl = document.createElement('div');
           dEl.innerHTML = `<div style="background:#dc2626; color:#fff; padding:2px 7px; border-radius:6px; font-size:0.7rem; font-weight:900;">🔴 وجهة العميل</div>`;
-          mapMarkers.push(new mapboxgl.Marker(dEl).setLngLat([r.dropoff.lng, r.dropoff.lat]).addTo(map));
+          mapMarkers.push(
+            new mapboxgl.Marker({ element: dEl, anchor: 'center' })
+              .setLngLat([Number(r.dropoff.lng), Number(r.dropoff.lat)])
+              .addTo(map)
+          );
         }
       });
 
-      document.getElementById('gps-live-badge').innerText = `🛰️ رادار الطلبات (${pulseCount} إشارة نبض نشطة) | v7.2`;
+      document.getElementById('gps-live-badge').innerText = `🛰️ رادار الطلبات (${pulseCount} إشارة نبض نشطة) | v7.3`;
 
       const myEl = document.createElement('div');
       myEl.innerHTML = `<div style="background:#2563eb; color:#fff; padding:2px 8px; border-radius:6px; font-size:0.72rem; font-weight:900; border:2px solid #fff;">🚙 موقعك</div>`;
-      mapMarkers.push(new mapboxgl.Marker(myEl).setLngLat([myPos.lng, myPos.lat]).addTo(map));
+      mapMarkers.push(
+        new mapboxgl.Marker({ element: myEl, anchor: 'center' })
+          .setLngLat([Number(myPos.lng), Number(myPos.lat)])
+          .addTo(map)
+      );
     }
 
     // تقارير الرحلات (Single-Line + زر تفاصيل Popup Modal + بحث فوري)
@@ -1899,14 +2027,14 @@
         ["عنوان الوجهة", r.dropoffAddress || 'وجهة مفتوحة'],
         ["المسافة التقديرية", `${Number(r.estimatedDistanceKm || 0).toFixed(2)} كم`],
         ["المسافة الفعلية المقطوعة", `${Number(r.actualDistanceKm || 0).toFixed(2)} كم`],
-        ["أجرة الرحلة الأساسية", `${Number(r.tripOriginalFare || 0).toFixed(2)} ج.م`],
+        ["أجرة الرحلة الفعلية على الشاشة", `${Number(r.tripOriginalFare || 0).toFixed(2)} ج.م`],
         ["النقدي المستلم من العميل", `${Number(r.cashCollectedAmount || 0).toFixed(2)} ج.م`],
         ["الفائض المودع بمحفظة العميل", `${Number(r.overpaymentCreditedToWallet || 0).toFixed(2)} ج.م`],
         ["صافي ربح الكابتن", `${Number(r.driverProfit || 0).toFixed(2)} ج.م`]
       ]);
     };
 
-    // كشف الحساب المالي للكابتن (Single-Line + زر تفاصيل Popup Modal + بحث فوري)
+    // كشف الحساب المالي للكابتن
     window.openLedgerModal = function() {
       toggleDriverDrawer(false);
       document.getElementById('ledger-modal').classList.add('open');
